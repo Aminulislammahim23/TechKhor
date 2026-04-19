@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Auth API Connection
+
+Frontend auth calls go through Next.js route handlers:
+
+- `POST /api/auth/register` -> `${BACKEND_API_URL}/auth/register`
+- `POST /api/auth/login` -> `${BACKEND_API_URL}/auth/login`
+
+Set backend base URL in environment:
+
+```bash
+BACKEND_API_URL=http://localhost:3000
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

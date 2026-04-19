@@ -13,9 +13,9 @@ import { Footer } from "@/components/landing/Footer";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Voltix — Premium Electronics & Gadget Accessories" },
+      { title: "TECHKHOR â€” Premium Electronics & Gadget Accessories" },
       { name: "description", content: "Shop curated headphones, wearables, chargers, and gaming gear. Free shipping over $49, 24h dispatch, 2-year warranty." },
-      { property: "og:title", content: "Voltix — Premium Electronics & Gadget Accessories" },
+      { property: "og:title", content: "TECHKHOR â€” Premium Electronics & Gadget Accessories" },
       { property: "og:description", content: "Curated headphones, wearables, chargers, and gaming gear. Fast shipping, unbeatable prices." },
     ],
   }),

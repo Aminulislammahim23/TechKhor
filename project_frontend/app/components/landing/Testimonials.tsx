@@ -1,49 +1,61 @@
-import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+﻿import { Star } from "lucide-react";
 
 const reviews = [
-  { name: "Maya K.", role: "Designer", text: "The Aurora headphones are unreal. Shipping took 2 days and packaging felt premium.", color: "from-primary/30" },
-  { name: "Devon R.", role: "Streamer", text: "Best gadget shop I've used. Support actually helped me pick the right keyboard for my setup.", color: "from-secondary/30" },
-  { name: "Aisha P.", role: "Engineer", text: "Prices beat every site I checked. The smartwatch arrived perfect — already on my second order.", color: "from-accent/30" },
+  {
+    name: "Maya K.",
+    role: "Designer",
+    text: "The Aurora headphones are unreal. Shipping took 2 days and packaging felt premium.",
+    color: "from-primary/30",
+  },
+  {
+    name: "Devon R.",
+    role: "Streamer",
+    text: "Best gadget shop I have used. Support actually helped me pick the right keyboard for my setup.",
+    color: "from-secondary/30",
+  },
+  {
+    name: "Aisha P.",
+    role: "Engineer",
+    text: "Prices beat every site I checked. The smartwatch arrived perfect and I am already on my second order.",
+    color: "from-accent/30",
+  },
 ];
 
 export function Testimonials() {
   return (
-    <section className="py-20 lg:py-28 relative overflow-hidden">
+    <section className="relative overflow-hidden py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <p className="text-sm font-medium text-accent mb-2">Loved by 50k+ buyers</p>
-          <h2 className="text-3xl sm:text-5xl font-bold">Real reviews. <span className="text-gradient-brand">No filters.</span></h2>
+        <div className="mb-14 text-center">
+          <p className="mb-2 text-sm font-medium text-accent">Loved by 50k+ buyers</p>
+          <h2 className="text-3xl font-bold sm:text-5xl">
+            Real reviews. <span className="text-gradient-brand">No filters.</span>
+          </h2>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {reviews.map((r, i) => (
-            <motion.div
+        <div className="grid gap-6 md:grid-cols-3">
+          {reviews.map((r) => (
+            <div
               key={r.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
-              className={`relative rounded-3xl p-7 border border-border bg-gradient-card overflow-hidden`}
+              className="relative overflow-hidden rounded-3xl border border-border bg-gradient-card p-7"
             >
-              <div className={`absolute -top-20 -right-20 h-48 w-48 rounded-full bg-gradient-to-br ${r.color} to-transparent blur-2xl`} />
+              <div className={`absolute -right-20 -top-20 h-48 w-48 rounded-full bg-gradient-to-br ${r.color} to-transparent blur-2xl`} />
               <div className="relative">
-                <div className="flex gap-0.5 mb-4">
+                <div className="mb-4 flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, j) => (
                     <Star key={j} className="h-4 w-4 fill-accent text-accent" />
                   ))}
                 </div>
-                <p className="text-foreground/90 leading-relaxed mb-6">"{r.text}"</p>
+                <p className="mb-6 leading-relaxed text-foreground/90">&quot;{r.text}&quot;</p>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-brand flex items-center justify-center text-primary-foreground font-bold">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand font-bold text-primary-foreground">
                     {r.name[0]}
                   </div>
                   <div>
-                    <div className="font-semibold text-sm">{r.name}</div>
+                    <div className="text-sm font-semibold">{r.name}</div>
                     <div className="text-xs text-muted-foreground">{r.role}</div>
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
