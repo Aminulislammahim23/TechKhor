@@ -51,4 +51,7 @@ export class Order {
 
   @OneToMany(() => Payment, payment => payment.order)
   payments: Payment[];
+
+  // @OneToMany type imported in customer.module.ts to avoid circular dependency
+  trackingHistory: any[];
 }

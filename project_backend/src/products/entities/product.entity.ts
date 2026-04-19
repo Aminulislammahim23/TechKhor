@@ -43,6 +43,9 @@ export class Product {
   @OneToMany(() => OrderItem, orderItem => orderItem.product)
   orderItems: OrderItem[];
 
+  // @OneToMany type imported in customer.module.ts to avoid circular dependency
+  reviews: any[];
+
   @CreateDateColumn()
   createdAt: Date;
 

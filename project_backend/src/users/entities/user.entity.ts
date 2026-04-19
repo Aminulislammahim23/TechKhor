@@ -2,6 +2,9 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne } from "typ
 import { Product } from "../../products/entities/product.entity";
 import { Order } from "../../orders/entities/order.entity";
 import { Cart } from "../../cart/entities/cart.entity";
+import { WithdrawRequest } from "../../seller/entities/withdraw-request.entity";
+import { Address } from "../../customer/entities/address.entity";
+import { Review } from "../../customer/entities/review.entity";
 
 export enum Role {
     ADMIN = "admin",
@@ -61,4 +64,13 @@ export class Users {
 
     @OneToOne(() => Cart, cart => cart.user, { nullable: true })
     cart: Cart;
+
+    @OneToMany(() => WithdrawRequest, withdrawRequest => withdrawRequest.seller)
+    withdrawRequests: WithdrawRequest[];
+
+    @OneToMany(() => Address, address => address.customer)
+    addresses: Address[];
+
+    @OneToMany(() => Review, review => review.customer)
+    reviews: Review[];
 }
