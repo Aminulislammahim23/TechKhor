@@ -1,9 +1,9 @@
 ﻿import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import audio from "@/app/assests/cat-audio.jpg";
-import wear from "@/app/assests/cat-wearables.jpg";
-import charge from "@/app/assests/cat-charging.jpg";
-import gaming from "@/app/assests/cat-gaming.jpg";
+import audio from "@/assests/cat-audio.jpg";
+import wear from "@/assests/cat-wearables.jpg";
+import charge from "@/assests/cat-charging.jpg";
+import gaming from "@/assests/cat-gaming.jpg";
 
 const cats = [
   { title: "Audio", count: "120+ items", img: audio, accent: "from-primary/40 to-transparent" },

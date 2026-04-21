@@ -1,6 +1,6 @@
 ﻿import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
-import heroImg from "@/app/assests/hero-gadgets.jpg";
+import heroImg from "@/assests/hero-gadgets.jpg";
 
 export function Hero() {
   return (

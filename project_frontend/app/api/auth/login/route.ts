@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL ?? "http://localhost:3000";
+const BACKEND_API_URL = process.env.BACKEND_API_URL ?? "http://localhost:5005";
 
 const getErrorMessage = (payload: unknown): string => {
   if (
@@ -86,7 +86,10 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json(
-    { message: "Login successful" },
+    { 
+      message: "Login successful",
+      access_token: accessToken 
+    },
     { status: 200 },
   );
 

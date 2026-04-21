@@ -1,9 +1,9 @@
 ﻿import Image from "next/image";
 import { Star, ShoppingBag } from "lucide-react";
-import h from "@/app/assests/prod-headphones.jpg";
-import e from "@/app/assests/prod-earbuds.jpg";
-import w from "@/app/assests/prod-watch.jpg";
-import p from "@/app/assests/prod-powerbank.jpg";
+import h from "@/assests/prod-headphones.jpg";
+import e from "@/assests/prod-earbuds.jpg";
+import w from "@/assests/prod-watch.jpg";
+import p from "@/assests/prod-powerbank.jpg";
 
 const products = [
   { name: "Aurora Pro Headphones", price: 149, old: 199, img: h, tag: "Bestseller", rating: 4.9 },

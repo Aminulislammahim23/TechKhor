@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+import { getUserTypeFromToken } from "@/lib/jwt";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,7 +45,19 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/");
+      // Check if user is admin and redirect accordingly
+      if (payload?.access_token) {
+        const userType = getUserTypeFromToken(payload.access_token);
+        
+        if (userType === "admin" || userType === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
+      } else {
+        router.push("/");
+      }
+      
       router.refresh();
     } catch {
       setError("Something went wrong while logging in");

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL ?? "http://localhost:3000";
+const BACKEND_API_URL = process.env.BACKEND_API_URL ?? "http://localhost:5005";
 const ALLOWED_ROLES = new Set(["customer", "seller"]);
 
 const getErrorMessage = (payload: unknown): string => {

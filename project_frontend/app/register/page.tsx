@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-type AccountRole = "customer" | "seller";
+type AccountRole = "customer";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -102,20 +102,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="role" className="mb-2 block text-sm font-medium">
-                Account Type
-              </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(event) => setRole(event.target.value as AccountRole)}
-                className="h-11 w-full rounded-xl border border-border bg-background/60 px-4 text-sm outline-none transition-colors focus:border-primary"
-              >
-                <option value="customer">Customer</option>
-                <option value="seller">Seller</option>
-              </select>
-            </div>
 
             <div>
               <label
