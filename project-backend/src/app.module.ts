@@ -10,6 +10,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersService } from './orders/orders.service';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 
 
 @Module({
@@ -34,6 +35,7 @@ import { OrdersModule } from './orders/orders.module';
     CategoriesModule,
     CartModule,
     OrdersModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, OrdersService],
