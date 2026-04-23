@@ -1,20 +1,24 @@
 import {
-  Entity, PrimaryGeneratedColumn, ManyToOne, Column
+  Entity, PrimaryGeneratedColumn,
+  ManyToOne, Column
 } from 'typeorm';
-import { Cart } from './cart.entity';
+import { Order } from './order.entity';
 import { Product } from '../../products/entities/product.entity';
 
 @Entity()
-export class CartItem {
+export class OrderItem {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Cart)
-  cart: Cart;
+  @ManyToOne(() => Order)
+  order: Order;
 
   @ManyToOne(() => Product)
   product: Product;
 
   @Column()
   quantity: number;
+
+  @Column('decimal')
+  price: number;
 }
