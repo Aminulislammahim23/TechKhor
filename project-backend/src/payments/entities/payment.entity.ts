@@ -28,7 +28,7 @@ export class Payment {
   @Column({ default: 'pending' })
   status: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   transactionId: string | null;
 
   @CreateDateColumn()
