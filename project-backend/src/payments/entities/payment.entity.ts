@@ -8,12 +8,6 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Order } from '../../orders/entities/order.entity';
 
-export enum PaymentStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
-
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()
@@ -28,18 +22,14 @@ export class Payment {
   @Column('decimal')
   amount: number;
 
-  @Column({ default: 'mock' }) // stripe / sslcommerz / mock
+  @Column({ default: 'mock' })
   method: string;
 
-  @Column({
-    type: 'enum',
-    enum: PaymentStatus,
-    default: PaymentStatus.PENDING,
-  })
-  status: PaymentStatus;
+  @Column({ default: 'pending' })
+  status: string;
 
   @Column({ nullable: true })
-  transactionId: string;
+  transactionId: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, CreateDateColumn
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Category } from '../../categories/entities/category.entity';
@@ -24,6 +27,18 @@ export class Product {
 
   @Column({ default: false })
   isApproved: boolean;
+
+  // 🖼️ NEW (image support)
+  @Column({ nullable: true })
+  image: string;
+
+  // ⭐ NEW (rating system future use)
+  @Column({ default: 0 })
+  rating: number;
+
+  // 🔍 NEW (search optimization)
+  @Column({ nullable: true })
+  tags: string;
 
   @CreateDateColumn()
   createdAt: Date;

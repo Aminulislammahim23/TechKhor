@@ -2,54 +2,72 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-interface OrderItem {
-  productId: number;
-  quantity: number;
-}
-
-export interface Order {
-  id: number;
-  userId: number;
-  items: OrderItem[];
-  totalPrice: number;
-  status: string;
-  createdAt: Date;
-}
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class OrdersService {
-  private orders: Order[] = [];
+  constructor(
+    @InjectRepository(Order)
+    private orderRepo: Repository<Order>,
 
-  // ✅ Create Order
-  create(userId: number, dto: CreateOrderDto) {
-    const total = dto.items.reduce(
-      (sum, item) => sum + item.quantity * 100,
+    @InjectRepository(OrderItem)
+    private itemRepo: Repository<OrderItem>,
+
+    private cartService: CartService,
+  ) { }
+
+  // 🔥 Cart → Order (MAIN FLOW)
+  async createFromCart(userId: number) {
+    const cart = await this.cartService.getCart(userId);
+
+    if (!cart || !cart.items.length) {
+      throw new NotFoundException('Cart is empty');
+    }
+
+    const orderItems = cart.items.map((item) =>
+      this.itemRepo.create({
+        product: item.product,
+        quantity: item.quantity,
+        price: 100, // later dynamic price
+      }),
+    );
+
+    const total = orderItems.reduce(
+      (sum, i) => sum + i.quantity * i.price,
       0,
     );
 
-    const order: Order = {
-      id: Date.now(),
-      userId,
-      items: dto.items,
+    const order = this.orderRepo.create({
+      user: { id: userId },
+      items: orderItems,
       totalPrice: total,
       status: 'pending',
-      createdAt: new Date(),
-    };
+    });
 
-    this.orders.push(order);
+    await this.orderRepo.save(order);
+
     return order;
   }
 
   // ✅ Get My Orders
-  findMyOrders(userId: number) {
-    return this.orders.filter((o) => o.userId === userId);
+  async findMyOrders(userId: number) {
+    return this.orderRepo.find({
+      where: { user: { id: userId } },
+      relations: ['items', 'items.product'],
+    });
   }
 
-  // ✅ Get Single Order (🔥 REQUIRED for payment)
-  findOne(id: number) {
-    const order = this.orders.find((o) => o.id === id);
+  // ✅ Get Single Order
+  async findOne(id: number) {
+    const order = await this.orderRepo.findOne({
+      where: { id },
+      relations: ['items', 'items.product'],
+    });
 
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -58,32 +76,23 @@ export class OrdersService {
     return order;
   }
 
-  // ✅ Mark Order as Paid (🔥 CRITICAL)
-  markAsPaid(orderId: number) {
-    const order = this.orders.find((o) => o.id === orderId);
-
-    if (!order) {
-      throw new NotFoundException('Order not found');
-    }
+  // 🔥 Payment Integration
+  async markAsPaid(orderId: number) {
+    const order = await this.findOne(orderId);
 
     if (order.status === 'paid') {
-      return order; // already paid
+      return order;
     }
 
     order.status = 'paid';
 
-    return order;
+    return this.orderRepo.save(order);
   }
 
-  // ✅ Optional: Delete Order
-  remove(orderId: number) {
-    const index = this.orders.findIndex((o) => o.id === orderId);
-
-    if (index === -1) {
-      throw new NotFoundException('Order not found');
-    }
-
-    this.orders.splice(index, 1);
+  // ❌ optional delete
+  async remove(orderId: number) {
+    const order = await this.findOne(orderId);
+    await this.orderRepo.remove(order);
 
     return { message: 'Order deleted' };
   }

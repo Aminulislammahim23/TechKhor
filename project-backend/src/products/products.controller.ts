@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, UseGuards, Req
+  Param, Body, UseGuards, Req, Query
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,11 +9,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly service: ProductsService) {}
+  constructor(private readonly service: ProductsService) { }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() query: any) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')

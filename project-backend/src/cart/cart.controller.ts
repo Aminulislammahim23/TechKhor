@@ -3,7 +3,6 @@ import {
   Body, Req, UseGuards
 } from '@nestjs/common';
 import { CartService } from './cart.service';
-import type { CartItem } from './cart.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 
@@ -13,13 +12,13 @@ export class CartController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  add(@Body() dto: AddToCartDto, @Req() req): CartItem {
+  async add(@Body() dto: AddToCartDto, @Req() req) {
     return this.service.add(req.user.id, dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  getCart(@Req() req): CartItem[] {
+  async getCart(@Req() req) {
     return this.service.getCart(req.user.id);
   }
 }

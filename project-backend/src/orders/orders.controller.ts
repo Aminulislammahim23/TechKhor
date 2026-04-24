@@ -1,11 +1,9 @@
 import {
   Controller, Post, Get,
-  Body, Req, UseGuards
+  Req, UseGuards
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import type { Order } from './orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -13,13 +11,13 @@ export class OrdersController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() dto: CreateOrderDto, @Req() req): Order {
-    return this.service.create(req.user.id, dto);
+  async create(@Req() req) {
+    return this.service.createFromCart(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  myOrders(@Req() req): Order[] {
+  async myOrders(@Req() req) {
     return this.service.findMyOrders(req.user.id);
   }
 }

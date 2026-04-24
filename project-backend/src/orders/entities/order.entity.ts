@@ -1,15 +1,13 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, CreateDateColumn
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
+  OneToMany,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-
-export enum OrderStatus {
-  PENDING = 'pending',
-  PAID = 'paid',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-}
+import { OrderItem } from './order-item.entity';
 
 @Entity()
 export class Order {
@@ -19,15 +17,14 @@ export class Order {
   @ManyToOne(() => User)
   user: User;
 
-  @Column('decimal')
+  @OneToMany(() => OrderItem, item => item.order, { cascade: true })
+  items: OrderItem[];
+
+  @Column()
   totalPrice: number;
 
-  @Column({
-    type: 'enum',
-    enum: OrderStatus,
-    default: OrderStatus.PENDING,
-  })
-  status: OrderStatus;
+  @Column()
+  status: string;
 
   @CreateDateColumn()
   createdAt: Date;

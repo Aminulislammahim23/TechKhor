@@ -1,5 +1,8 @@
 import {
-  Entity, PrimaryGeneratedColumn, ManyToOne, Column
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
 } from 'typeorm';
 import { Cart } from './cart.entity';
 import { Product } from '../../products/entities/product.entity';
@@ -9,7 +12,7 @@ export class CartItem {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Cart)
+  @ManyToOne(() => Cart, cart => cart.items)
   cart: Cart;
 
   @ManyToOne(() => Product)

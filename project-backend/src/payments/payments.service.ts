@@ -3,62 +3,66 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { OrdersService } from '../orders/orders.service';
-
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { Payment } from './entities/payment.entity';
 
 @Injectable()
 export class PaymentsService {
-  private payments: Payment[] = [];
+  constructor(
+    @InjectRepository(Payment)
+    private paymentRepo: Repository<Payment>,
+    private ordersService: OrdersService,
+  ) {}
 
-  constructor(private ordersService: OrdersService) {}
+  async create(userId: number, dto: CreatePaymentDto) {
+    // 1. Prevent duplicate payment for same order
+    const existing = await this.paymentRepo.findOne({
+      where: { order: { id: dto.orderId } },
+    });
 
-  async create(userId: number, dto: any) {
-    const existing = this.payments.find(
-      (p) => p.orderId === dto.orderId,
-    );
-
-    if (existing) {
-      throw new BadRequestException('Payment already completed');
+    if (existing && existing.status === 'success') {
+      throw new BadRequestException('Payment already completed for this order');
     }
 
+    // 2. Validate order exists using OrdersService
     const order = await this.ordersService.findOne(dto.orderId);
 
-    if (!order) {
-      throw new NotFoundException('Order not found');
-    }
-
-    const payment: Payment = {
-      id: Date.now(),
-      userId,
-      orderId: dto.orderId,
+    // 3. Create payment record
+    const payment = this.paymentRepo.create({
+      user: { id: userId },
+      order: { id: dto.orderId },
       amount: dto.amount,
       method: dto.method,
       status: 'pending',
       transactionId: null,
-      createdAt: new Date(),
-    };
+    });
 
+    // 4. If method = 'mock', process immediately
     if (dto.method === 'mock') {
       payment.status = 'success';
-      payment.transactionId = 'TXN-' + Date.now();
+      payment.transactionId = 'TXN-MOCK-' + Date.now();
 
       await this.ordersService.markAsPaid(dto.orderId);
     }
 
-    this.payments.push(payment);
-
-    return {
-      message: 'Payment processed successfully',
-      payment,
-    };
+    return this.paymentRepo.save(payment);
   }
 
-  findAll(userId: number) {
-    return this.payments.filter((p) => p.userId === userId);
+  async findAll(userId: number) {
+    return this.paymentRepo.find({
+      where: { user: { id: userId } },
+      relations: ['order'],
+    });
   }
 
-  findOne(id: number) {
-    const payment = this.payments.find((p) => p.id === id);
+  async findOne(id: number) {
+    const payment = await this.paymentRepo.findOne({
+      where: { id },
+      relations: ['order'],
+    });
 
     if (!payment) {
       throw new NotFoundException('Payment not found');
