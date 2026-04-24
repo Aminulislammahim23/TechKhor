@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { register } from "../api.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { register, normalizeApiError } from "../api";
 import { useAuth } from "../hooks/useAuth";
 
 const initialState = {
@@ -11,6 +11,7 @@ const initialState = {
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
@@ -19,9 +20,9 @@ export default function Register() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/", { replace: true });
+      navigate(location.state?.from?.pathname || "/products", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -56,12 +57,7 @@ export default function Register() {
       setForm(initialState);
       navigate("/login", { replace: true });
     } catch (error) {
-      const responseMessage = error?.response?.data?.message;
-      setServerError(
-        Array.isArray(responseMessage)
-          ? responseMessage.join(", ")
-          : responseMessage || error?.message || "Unable to register right now. Please try again."
-      );
+      setServerError(normalizeApiError(error));
     } finally {
       setLoading(false);
     }

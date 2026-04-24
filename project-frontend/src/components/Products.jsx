@@ -15,7 +15,7 @@ export default function Products({ products = [], title = "Featured Products", s
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {products.map((product) => (
-          <ProductCard key={product._id} product={product} />
+          <ProductCard key={product.id || product._id || product.slug || product.name} product={product} />
         ))}
       </div>
     </section>

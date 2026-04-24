@@ -1,22 +1,7 @@
 import { useEffect, useState } from "react";
+import { getAuthToken, isAuthenticated, setAuthToken } from "../api";
 
-export function getAuthToken() {
-  return localStorage.getItem("token");
-}
-
-export function isAuthenticated() {
-  return Boolean(getAuthToken());
-}
-
-export function setAuthToken(token) {
-  if (token) {
-    localStorage.setItem("token", token);
-  } else {
-    localStorage.removeItem("token");
-  }
-
-  window.dispatchEvent(new Event("authchange"));
-}
+export { getAuthToken, isAuthenticated, setAuthToken };
 
 export function useAuth() {
   const [authenticated, setAuthenticated] = useState(isAuthenticated());

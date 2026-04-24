@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { login } from "../api.js";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { login, normalizeApiError } from "../api";
 import { setAuthToken, useAuth } from "../hooks/useAuth";
 
 const initialState = {
@@ -10,6 +10,7 @@ const initialState = {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
@@ -18,9 +19,9 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/", { replace: true });
+      navigate(location.state?.from?.pathname || "/products", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -57,14 +58,9 @@ export default function Login() {
       }
 
       setAuthToken(token);
-      navigate("/", { replace: true });
+      navigate(location.state?.from?.pathname || "/products", { replace: true });
     } catch (error) {
-      const responseMessage = error?.response?.data?.message;
-      setServerError(
-        Array.isArray(responseMessage)
-          ? responseMessage.join(", ")
-          : responseMessage || error?.message || "Unable to log in right now. Please try again."
-      );
+      setServerError(normalizeApiError(error));
     } finally {
       setLoading(false);
     }

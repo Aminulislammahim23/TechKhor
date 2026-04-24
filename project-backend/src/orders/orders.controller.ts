@@ -16,8 +16,20 @@ export class OrdersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('from-cart')
+  async createFromCart(@Req() req) {
+    return this.service.createFromCart(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get()
   async myOrders(@Req() req) {
+    return this.service.findMyOrders(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  async myOrdersAlias(@Req() req) {
     return this.service.findMyOrders(req.user.id);
   }
 }
