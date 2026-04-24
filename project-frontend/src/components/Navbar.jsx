@@ -17,7 +17,7 @@ export default function Navbar() {
   const handleLogout = () => {
     setAuthToken(null);
     setOpen(false);
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   return (

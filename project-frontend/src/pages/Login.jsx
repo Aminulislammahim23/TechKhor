@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
-import { setAuthToken } from "../hooks/useAuth";
+import { login } from "../api.js";
+import { setAuthToken, useAuth } from "../hooks/useAuth";
 
 const initialState = {
   email: "",
@@ -10,10 +10,17 @@ const initialState = {
 
 export default function Login() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -38,7 +45,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const { data } = await api.post("/auth/login", {
+      const { data } = await login({
         email: form.email.trim(),
         password: form.password,
       });
@@ -50,12 +57,13 @@ export default function Login() {
       }
 
       setAuthToken(token);
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
+      const responseMessage = error?.response?.data?.message;
       setServerError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to log in right now. Please try again."
+        Array.isArray(responseMessage)
+          ? responseMessage.join(", ")
+          : responseMessage || error?.message || "Unable to log in right now. Please try again."
       );
     } finally {
       setLoading(false);
@@ -63,7 +71,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-950 px-4 py-12">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Welcome back</p>
