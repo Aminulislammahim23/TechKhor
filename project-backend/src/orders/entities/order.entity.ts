@@ -6,6 +6,7 @@ import { User } from '../../users/entities/user.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',
+  PAID = 'paid',
   SHIPPED = 'shipped',
   DELIVERED = 'delivered',
 }
