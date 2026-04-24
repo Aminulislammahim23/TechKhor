@@ -1,43 +1,57 @@
-import { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import ProductCard from "../components/ProductCard";
-import { getProducts } from "../api/product.api";
+import { useState } from "react";
+import Table, { StatusPill } from "../components/Table";
+import { products as initialProducts } from "../data/adminData";
 
 export default function Products() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(initialProducts);
 
-  useEffect(() => {
-    getProducts()
-      .then((res) => setProducts(res.data))
-      .catch(() => setProducts([]));
-  }, []);
+  const approveProduct = (productId) => {
+    setProducts((current) =>
+      current.map((product) =>
+        product.id === productId ? { ...product, status: "Approved" } : product
+      )
+    );
+  };
+
+  const columns = [
+    { key: "name", label: "Name" },
+    { key: "price", label: "Price" },
+    { key: "seller", label: "Seller" },
+    {
+      key: "status",
+      label: "Status",
+      render: (row) => (
+        <div className="flex flex-col gap-3">
+          <StatusPill status={row.status} />
+          {row.status === "Pending" ? (
+            <button
+              type="button"
+              onClick={() => approveProduct(row.id)}
+              className="w-fit rounded-xl bg-cyan-400 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-cyan-300"
+            >
+              Approve Product
+            </button>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <Navbar />
-
-      <main className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mb-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Catalog</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Products</h1>
-          <p className="mt-4 max-w-2xl text-slate-400">
-            Browse the full lineup of gadgets and accessories available from TechKhor.
-          </p>
+    <section className="space-y-6">
+      <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-slate-950/30">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-cyan-400">Product Review</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">Approve product submissions quickly</h3>
+          </div>
+          <span className="rounded-full bg-white/5 px-3 py-2 text-sm text-slate-300 ring-1 ring-white/10">
+            {products.filter((product) => product.status === "Pending").length} pending
+          </span>
         </div>
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {products.length > 0 ? (
-            products.map((product) => <ProductCard key={product._id} product={product} />)
-          ) : (
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300 md:col-span-2 xl:col-span-3">
-              No products found right now. Try again after connecting the backend API.
-            </div>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+      <Table columns={columns} data={products} rowKey="id" />
+    </section>
   );
 }
