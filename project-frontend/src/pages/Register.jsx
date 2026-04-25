@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { register, normalizeApiError } from "../api";
+import { useAuth } from "../hooks/useAuth";
 
 const initialState = {
   fullName: "",
@@ -10,11 +11,18 @@ const initialState = {
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState("");
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(location.state?.from?.pathname || "/products", { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -34,35 +42,29 @@ export default function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setMessage("");
     setServerError("");
 
     if (!validate()) return;
 
     try {
       setLoading(true);
-      await api.post("/auth/register", {
+      await register({
         fullName: form.fullName.trim(),
         email: form.email.trim(),
         password: form.password,
       });
 
-      setMessage("Registration successful. Redirecting to login...");
       setForm(initialState);
-      setTimeout(() => navigate("/login"), 1200);
+      navigate("/login", { replace: true });
     } catch (error) {
-      setServerError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to register right now. Please try again."
-      );
+      setServerError(normalizeApiError(error));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-950 px-4 py-12">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Create account</p>
@@ -122,12 +124,6 @@ export default function Register() {
           {serverError ? (
             <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
               {serverError}
-            </div>
-          ) : null}
-
-          {message ? (
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-              {message}
             </div>
           ) : null}
 

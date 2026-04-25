@@ -1,59 +1,86 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { setAuthToken, useAuth } from "../hooks/useAuth";
+import { getCurrentRoleFromToken } from "../utils/jwt";
 
-const navItems = [
-  { label: "Home", href: "#home" },
-  { label: "Products", href: "#products" },
-  { label: "Categories", href: "#categories" },
-  { label: "Contact", href: "#contact" },
+const publicLinks = [
+  { label: "Home", to: "/" },
+  { label: "Products", to: "/products" },
+  { label: "Best Deals", to: "/best-deals" },
+  { label: "PC Builder", to: "/pc-builder" },
 ];
+
+const authenticatedLinks = [
+  { label: "Orders", to: "/orders" },
+  { label: "Cart", to: "/cart" },
+  { label: "Payment", to: "/payment" },
+];
+
+function navClass({ isActive }) {
+  return `text-sm font-medium transition ${isActive ? "text-white" : "text-slate-300 hover:text-white"}`;
+}
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
+  const role = getCurrentRoleFromToken(token);
+  const isAdmin = role === "admin";
+  const isSeller = role === "seller";
 
   const handleLogout = () => {
     setAuthToken(null);
     setOpen(false);
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 font-black text-slate-950 shadow-lg shadow-cyan-500/20">
-            TK
-          </span>
-          <div>
-            <p className="text-lg font-bold tracking-tight text-white">TechKhor</p>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Tech accessories</p>
-          </div>
+        <Link to="/" className="flex items-center">
+          <img
+            src="/main-logo.jpeg"
+            alt="TechKhor logo"
+            className="h-11 w-auto rounded-xl object-contain"
+          />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="text-sm font-medium text-slate-300 transition hover:text-white"
-            >
-              {item.label}
-            </a>
-          ))}
+          {!isAdmin && !isSeller
+            ? publicLinks.map((item) => (
+                <NavLink key={item.label} to={item.to} className={navClass}>
+                  {item.label}
+                </NavLink>
+              ))
+            : null}
+          {!isAdmin && !isSeller && isAuthenticated
+            ? authenticatedLinks.map((item) => (
+                <NavLink key={item.label} to={item.to} className={navClass}>
+                  {item.label}
+                </NavLink>
+              ))
+            : null}
+          {isAdmin ? (
+            <NavLink to="/admin" className={navClass}>
+              Admin
+            </NavLink>
+          ) : null}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
           {isAuthenticated ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                {role || "customer"}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                Logout
+              </button>
+            </div>
           ) : (
             <>
               <Link
@@ -87,25 +114,53 @@ export default function Navbar() {
       {open ? (
         <div className="border-t border-white/10 bg-slate-950/95 px-4 py-4 md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-4">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
+            {!isAdmin && !isSeller
+              ? publicLinks.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))
+              : null}
+            {!isAdmin && !isSeller && isAuthenticated
+              ? authenticatedLinks.map((item) => (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))
+              : null}
+            {isAdmin ? (
+              <NavLink
+                to="/admin"
                 className="rounded-2xl px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
                 onClick={() => setOpen(false)}
               >
-                {item.label}
-              </a>
-            ))}
+                Admin
+              </NavLink>
+            ) : null}
             <div className="flex gap-3 pt-2">
               {isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex-1 rounded-full bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
-                >
-                  Logout
-                </button>
+                <>
+                  <span className="flex-1 rounded-full border border-white/10 px-4 py-3 text-center text-sm font-medium text-slate-300">
+                    {role || "customer"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex-1 rounded-full bg-white px-4 py-3 text-center text-sm font-semibold text-slate-950"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <>
                   <Link

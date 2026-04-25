@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
-import { setAuthToken } from "../hooks/useAuth";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { login, normalizeApiError } from "../api";
+import { setAuthToken, useAuth } from "../hooks/useAuth";
+import { getCurrentRoleFromToken } from "../utils/jwt";
 
 const initialState = {
   email: "",
@@ -10,10 +11,25 @@ const initialState = {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, token } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const role = getCurrentRoleFromToken(token);
+      const fromPath =
+        typeof location.state?.from === "string"
+          ? location.state.from
+          : location.state?.from?.pathname;
+
+      const fallbackPath = role === "admin" ? "/admin" : role === "seller" ? "/seller" : "/products";
+      navigate(fromPath || fallbackPath, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state, token]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -38,7 +54,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const { data } = await api.post("/auth/login", {
+      const { data } = await login({
         email: form.email.trim(),
         password: form.password,
       });
@@ -50,20 +66,23 @@ export default function Login() {
       }
 
       setAuthToken(token);
-      navigate("/");
+      const role = getCurrentRoleFromToken(token);
+      const fromPath =
+        typeof location.state?.from === "string"
+          ? location.state.from
+          : location.state?.from?.pathname;
+
+      const fallbackPath = role === "admin" ? "/admin" : role === "seller" ? "/seller" : "/products";
+      navigate(fromPath || fallbackPath, { replace: true });
     } catch (error) {
-      setServerError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to log in right now. Please try again."
-      );
+      setServerError(normalizeApiError(error));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-950 px-4 py-12">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-glow backdrop-blur">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Welcome back</p>

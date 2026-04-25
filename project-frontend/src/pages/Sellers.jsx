@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import Table from "../components/Table";
-import { deleteSeller, getSellers } from "../api/users.api";
+import { deleteSeller, getSellers, setSellerMaintenanceAccess } from "../api/users.api";
 
 export default function Sellers() {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [updatingSellerId, setUpdatingSellerId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -58,6 +59,28 @@ export default function Sellers() {
     }
   };
 
+  const handleMaintenanceAccessToggle = async (seller) => {
+    try {
+      setUpdatingSellerId(seller.id);
+      setError("");
+      const nextEnabled = !seller.canAccessDuringMaintenance;
+      await setSellerMaintenanceAccess(seller.id, nextEnabled);
+      setSellers((current) =>
+        current.map((item) =>
+          item.id === seller.id ? { ...item, canAccessDuringMaintenance: nextEnabled } : item
+        )
+      );
+    } catch (requestError) {
+      setError(
+        requestError?.response?.data?.message ||
+          requestError?.message ||
+          "Unable to update maintenance access."
+      );
+    } finally {
+      setUpdatingSellerId(null);
+    }
+  };
+
   const columns = [
     { key: "fullName", label: "Full Name" },
     { key: "email", label: "Email" },
@@ -67,6 +90,21 @@ export default function Sellers() {
       render: () => (
         <span className="inline-flex items-center rounded-full bg-cyan-400/15 px-3 py-1 text-xs font-semibold text-cyan-300 ring-1 ring-cyan-400/20">
           Seller
+        </span>
+      ),
+    },
+    {
+      key: "maintenanceAccess",
+      label: "Maintenance Access",
+      render: (row) => (
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+            row.canAccessDuringMaintenance
+              ? "bg-emerald-500/15 text-emerald-300 ring-emerald-400/20"
+              : "bg-rose-500/15 text-rose-300 ring-rose-400/20"
+          }`}
+        >
+          {row.canAccessDuringMaintenance ? "Allowed" : "Denied"}
         </span>
       ),
     },
@@ -99,13 +137,27 @@ export default function Sellers() {
           data={sellers}
           rowKey="id"
           renderRowActions={(seller) => (
-            <button
-              type="button"
-              onClick={() => handleDelete(seller.id)}
-              className="rounded-xl border border-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
-            >
-              Delete Seller
-            </button>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleMaintenanceAccessToggle(seller)}
+                disabled={updatingSellerId === seller.id}
+                className="rounded-xl border border-cyan-500/20 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/10 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {updatingSellerId === seller.id
+                  ? "Updating..."
+                  : seller.canAccessDuringMaintenance
+                  ? "Deny Access"
+                  : "Allow Access"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(seller.id)}
+                className="rounded-xl border border-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+              >
+                Delete Seller
+              </button>
+            </div>
           )}
         />
       )}
