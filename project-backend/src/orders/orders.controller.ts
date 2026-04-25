@@ -1,9 +1,12 @@
 import {
   Controller, Post, Get,
-  Req, UseGuards
+  Req, UseGuards, Body
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -11,7 +14,23 @@ export class OrdersController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Req() req) {
+  async create(
+    @Req() req,
+    @Body() body: CreateOrderDto,
+  ) {
+    if (Array.isArray(body?.items) && body.items.length > 0) {
+      return this.service.createFromItems(req.user, body.items, {
+        customerName: body.customerName,
+        customerPhone: body.customerPhone,
+      });
+    }
+
+    return this.service.createFromCart(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('from-cart')
+  async createFromCart(@Req() req) {
     return this.service.createFromCart(req.user.id);
   }
 
@@ -19,5 +38,18 @@ export class OrdersController {
   @Get()
   async myOrders(@Req() req) {
     return this.service.findMyOrders(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  async myOrdersAlias(@Req() req) {
+    return this.service.findMyOrders(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('admin')
+  async findAllForAdmin() {
+    return this.service.findAllForAdmin();
   }
 }

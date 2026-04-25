@@ -17,6 +17,9 @@ export class Order {
   @ManyToOne(() => User)
   user: User;
 
+  @ManyToOne(() => User, { nullable: true })
+  customer: User | null;
+
   @OneToMany(() => OrderItem, item => item.order, { cascade: true })
   items: OrderItem[];
 
@@ -25,6 +28,18 @@ export class Order {
 
   @Column()
   status: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  customerName: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  customerPhone: string | null;
+
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  customerDiscountAmount: number;
+
+  @Column('decimal', { precision: 5, scale: 4, default: 0 })
+  customerDiscountRate: number;
 
   @CreateDateColumn()
   createdAt: Date;

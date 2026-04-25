@@ -12,6 +12,8 @@ import { CategoriesModule } from './categories/categories.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { AdminAnalyticsModule } from './admin-analytics/admin-analytics.module';
+import { EarningsModule } from './earnings/earnings.module';
 
 loadEnv({ path: resolve(__dirname, '..', '.env') });
 
@@ -38,6 +40,8 @@ loadEnv({ path: resolve(__dirname, '..', '.env') });
     CartModule,
     OrdersModule,
     PaymentsModule,
+    EarningsModule,
+    AdminAnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -22,6 +22,9 @@ export class User{
     @Column({ unique: true })
     email: string;
 
+    @Column({ type: 'varchar', unique: true, nullable: true })
+    phone: string | null;
+
     @Column()
     password: string;
 
@@ -31,6 +34,9 @@ export class User{
         default: Role.CUSTOMER,
     })
     role: Role;
+
+    @Column({ default: false })
+    canAccessDuringMaintenance: boolean;
 
     @CreateDateColumn()
     createdAt: Date;

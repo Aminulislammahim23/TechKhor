@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './entities/payment.entity';
+import { EarningsService } from '../earnings/earnings.service';
 
 @Injectable()
 export class PaymentsService {
@@ -15,6 +16,7 @@ export class PaymentsService {
     @InjectRepository(Payment)
     private paymentRepo: Repository<Payment>,
     private ordersService: OrdersService,
+    private earningsService: EarningsService,
   ) {}
 
   async create(userId: number, dto: CreatePaymentDto) {
@@ -40,21 +42,37 @@ export class PaymentsService {
       transactionId: null,
     });
 
-    // 4. If method = 'mock', process immediately
-    if (dto.method === 'mock') {
+    // 4. For POS-friendly methods, process immediately
+    if (['mock', 'cash', 'card'].includes(String(dto.method).toLowerCase())) {
       payment.status = 'success';
-      payment.transactionId = 'TXN-MOCK-' + Date.now();
+      payment.transactionId = `TXN-${String(dto.method || 'mock').toUpperCase()}-${Date.now()}`;
 
       await this.ordersService.markAsPaid(dto.orderId);
     }
 
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+
+    if (savedPayment.status === 'success') {
+      await this.earningsService.generateForSuccessfulPayment(
+        savedPayment.id,
+        dto.orderId,
+      );
+    }
+
+    return savedPayment;
   }
 
   async findAll(userId: number) {
     return this.paymentRepo.find({
       where: { user: { id: userId } },
       relations: ['order'],
+    });
+  }
+
+  async findAllForAdmin() {
+    return this.paymentRepo.find({
+      relations: ['order', 'user'],
+      order: { createdAt: 'DESC' },
     });
   }
 

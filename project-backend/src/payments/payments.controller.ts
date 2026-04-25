@@ -11,6 +11,8 @@ import {
 import { PaymentsService } from './payments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('payments')
 export class PaymentsController {
@@ -28,6 +30,13 @@ export class PaymentsController {
   @Get()
   findAll(@Req() req) {
     return this.service.findAll(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('admin')
+  findAllForAdmin() {
+    return this.service.findAllForAdmin();
   }
 
   // 👉 Single Payment
