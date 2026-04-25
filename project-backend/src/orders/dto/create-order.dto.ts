@@ -1,9 +1,18 @@
-import { IsArray } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 
 export class CreateOrderDto {
+  @IsOptional()
   @IsArray()
-  items: {
+  items?: {
     productId: number;
     quantity: number;
   }[];
+
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
 }

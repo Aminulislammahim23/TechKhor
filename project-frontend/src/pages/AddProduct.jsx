@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createProduct, normalizeApiError } from "../api";
 import { getCategories } from "../api/categories.api";
+import BulkProductUpload from "../components/BulkProductUpload";
 
 const initialForm = {
   name: "",
@@ -190,6 +191,8 @@ export default function AddProduct() {
           </button>
         </div>
       </form>
+
+      <BulkProductUpload />
     </section>
   );
 }

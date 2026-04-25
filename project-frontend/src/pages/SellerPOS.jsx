@@ -3,9 +3,13 @@ import ProductSearch from "../components/ProductSearch";
 import Cart from "../components/Cart";
 import BillingSummary from "../components/BillingSummary";
 import Receipt from "../components/Receipt";
-import { createOrder, createPayment, getProducts, normalizeApiError } from "../api";
-import { useAuth } from "../hooks/useAuth";
-import { getCurrentUserIdFromToken } from "../utils/jwt";
+import {
+  createOrder,
+  createPayment,
+  getSellerPosProducts,
+  lookupCustomerByPhone,
+  normalizeApiError,
+} from "../api";
 
 function unwrapProducts(responseData) {
   if (Array.isArray(responseData)) return responseData;
@@ -14,13 +18,14 @@ function unwrapProducts(responseData) {
 }
 
 export default function SellerPOS() {
-  const { token } = useAuth();
-  const sellerId = getCurrentUserIdFromToken(token);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [cartItems, setCartItems] = useState([]);
-  const [discount, setDiscount] = useState("0");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerLookup, setCustomerLookup] = useState(null);
+  const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
   const [taxRate, setTaxRate] = useState("5");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -30,6 +35,7 @@ export default function SellerPOS() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const debounceRef = useRef(null);
+  const phoneLookupRef = useRef(null);
 
   useEffect(() => {
     if (debounceRef.current) {
@@ -39,18 +45,11 @@ export default function SellerPOS() {
     debounceRef.current = window.setTimeout(async () => {
       try {
         setSearchLoading(true);
-        const response = await getProducts({
+        const response = await getSellerPosProducts({
           search: query.trim(),
           limit: 20,
         });
-        const list = unwrapProducts(response.data);
-        const filtered = list.filter(
-          (item) =>
-            Number(item?.seller?.id) === Number(sellerId) &&
-            Boolean(item?.isApproved) &&
-            Number(item?.stock) > 0
-        );
-        setSearchResults(filtered);
+        setSearchResults(unwrapProducts(response.data));
       } catch {
         setSearchResults([]);
       } finally {
@@ -63,15 +62,56 @@ export default function SellerPOS() {
         window.clearTimeout(debounceRef.current);
       }
     };
-  }, [query, sellerId]);
+  }, [query]);
+
+  useEffect(() => {
+    const normalizedPhone = customerPhone.replace(/[^\d+]/g, "").trim();
+
+    if (phoneLookupRef.current) {
+      window.clearTimeout(phoneLookupRef.current);
+    }
+
+    if (normalizedPhone.length < 4) {
+      setCustomerLookup(null);
+      setCustomerLookupLoading(false);
+      return;
+    }
+
+    phoneLookupRef.current = window.setTimeout(async () => {
+      try {
+        setCustomerLookupLoading(true);
+        const response = await lookupCustomerByPhone(normalizedPhone);
+        const data = response.data || null;
+
+        setCustomerLookup(data);
+
+        if (data?.found && data?.customer?.fullName && !customerName.trim()) {
+          setCustomerName(data.customer.fullName);
+        }
+      } catch {
+        setCustomerLookup(null);
+      } finally {
+        setCustomerLookupLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      if (phoneLookupRef.current) {
+        window.clearTimeout(phoneLookupRef.current);
+      }
+    };
+  }, [customerPhone, customerName]);
 
   const subtotal = useMemo(
     () =>
       cartItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0),
     [cartItems]
   );
-  const discountAmount = Math.max(0, Number(discount) || 0);
-  const taxable = Math.max(0, subtotal - discountAmount);
+  const normalizedCustomerPhone = customerPhone.replace(/[^\d+]/g, "").trim();
+  const customerDiscountRate =
+    normalizedCustomerPhone.length >= 4 ? Number(customerLookup?.discountRate || 0.03) : 0;
+  const customerDiscountAmount = Number((subtotal * customerDiscountRate).toFixed(2));
+  const taxable = Math.max(0, subtotal - customerDiscountAmount);
   const taxAmount = (taxable * (Number(taxRate) || 0)) / 100;
   const total = Math.max(0, taxable + taxAmount);
 
@@ -128,9 +168,29 @@ export default function SellerPOS() {
     setCartItems((current) => current.filter((item) => item.id !== id));
   };
 
+  const handleCustomerNameChange = (value) => {
+    setCustomerName(value);
+    setCreatedOrder(null);
+  };
+
+  const handleCustomerPhoneChange = (value) => {
+    setCustomerPhone(value);
+    setCreatedOrder(null);
+  };
+
   const generateBill = async () => {
     if (cartItems.length === 0) {
       setError("Add products before generating bill.");
+      return;
+    }
+
+    if (!customerName.trim()) {
+      setError("Customer name is required.");
+      return;
+    }
+
+    if (!normalizedCustomerPhone) {
+      setError("Customer phone is required.");
       return;
     }
 
@@ -142,6 +202,8 @@ export default function SellerPOS() {
           productId: item.id,
           quantity: item.quantity,
         })),
+        customerName: customerName.trim(),
+        customerPhone: normalizedCustomerPhone,
       };
       const response = await createOrder(payload);
       setCreatedOrder(response.data);
@@ -173,8 +235,12 @@ export default function SellerPOS() {
         orderId: createdOrder.id,
         transactionId: payment?.transactionId || null,
         paymentMethod: paymentMethod,
+        customerName: createdOrder.customerName || customerName.trim(),
+        customerPhone: createdOrder.customerPhone || normalizedCustomerPhone,
+        customerId: createdOrder.customer?.id || customerLookup?.customer?.id || null,
+        discountRate: Number(createdOrder.customerDiscountRate ?? customerDiscountRate),
         subtotal,
-        discount: discountAmount,
+        discount: Number(createdOrder.customerDiscountAmount ?? customerDiscountAmount),
         taxAmount,
         total,
         createdAt: new Date().toISOString(),
@@ -183,7 +249,9 @@ export default function SellerPOS() {
       setToast("Sale completed successfully.");
       setCartItems([]);
       setCreatedOrder(null);
-      setDiscount("0");
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerLookup(null);
       setTaxRate("5");
     } catch (err) {
       setError(normalizeApiError(err));
@@ -224,8 +292,14 @@ export default function SellerPOS() {
           />
           <BillingSummary
             subtotal={subtotal}
-            discount={discount}
-            onDiscountChange={setDiscount}
+            customerName={customerName}
+            onCustomerNameChange={handleCustomerNameChange}
+            customerPhone={customerPhone}
+            onCustomerPhoneChange={handleCustomerPhoneChange}
+            customerLookup={customerLookup}
+            customerLookupLoading={customerLookupLoading}
+            customerDiscountRate={customerDiscountRate}
+            customerDiscountAmount={customerDiscountAmount}
             taxRate={taxRate}
             onTaxRateChange={setTaxRate}
             taxAmount={taxAmount}
@@ -237,7 +311,11 @@ export default function SellerPOS() {
             generatingBill={creatingOrder}
             processingPayment={processingPayment}
             orderId={createdOrder?.id}
-            canGenerate={cartItems.length > 0}
+            canGenerate={
+              cartItems.length > 0 &&
+              Boolean(customerName.trim()) &&
+              Boolean(normalizedCustomerPhone)
+            }
             canPay={Boolean(createdOrder?.id)}
           />
         </div>

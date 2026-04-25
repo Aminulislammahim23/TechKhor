@@ -1,6 +1,6 @@
 import {
   Controller, Get, Param,
-  Patch, Delete, Body, UseGuards, Post, ParseIntPipe
+  Patch, Delete, Body, UseGuards, Post, ParseIntPipe, Query
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -42,6 +42,13 @@ export class UsersController {
     @Body() body: { enabled?: boolean },
   ) {
     return this.service.setSellerMaintenanceAccess(id, Boolean(body?.enabled));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('seller', 'admin')
+  @Get('customers/lookup')
+  lookupCustomerByPhone(@Query('phone') phone: string) {
+    return this.service.lookupCustomerByPhone(phone);
   }
 
   @Get()

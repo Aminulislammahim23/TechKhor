@@ -6,6 +6,9 @@ function toReceiptText(receipt) {
     "------------------------------",
     `Date: ${new Date(receipt.createdAt).toLocaleString()}`,
     `Order ID: ${receipt.orderId}`,
+    `Customer ID: ${receipt.customerId || "N/A"}`,
+    `Customer: ${receipt.customerName || "N/A"}`,
+    `Phone: ${receipt.customerPhone || "N/A"}`,
     `Transaction ID: ${receipt.transactionId || "N/A"}`,
     `Payment Method: ${receipt.paymentMethod}`,
     "",
@@ -18,7 +21,7 @@ function toReceiptText(receipt) {
     ),
     "",
     `Subtotal: BDT ${receipt.subtotal.toLocaleString("en-BD")}`,
-    `Discount: BDT ${receipt.discount.toLocaleString("en-BD")}`,
+    `Discount (${Math.round(Number(receipt.discountRate || 0) * 100)}%): BDT ${receipt.discount.toLocaleString("en-BD")}`,
     `Tax: BDT ${receipt.taxAmount.toLocaleString("en-BD")}`,
     `Total: BDT ${receipt.total.toLocaleString("en-BD")}`,
     "",
@@ -26,6 +29,15 @@ function toReceiptText(receipt) {
   ];
 
   return lines.join("\n");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 export default function Receipt({ receipt, onClose }) {
@@ -51,6 +63,9 @@ export default function Receipt({ receipt, onClose }) {
           <h1>TechKhor</h1>
           <p>Date: ${new Date(receipt.createdAt).toLocaleString()}</p>
           <p>Order ID: ${receipt.orderId}</p>
+          <p>Customer ID: ${escapeHtml(receipt.customerId || "N/A")}</p>
+          <p>Customer: ${escapeHtml(receipt.customerName || "N/A")}</p>
+          <p>Phone: ${escapeHtml(receipt.customerPhone || "N/A")}</p>
           <p>Transaction ID: ${receipt.transactionId || "N/A"}</p>
           <table>
             <thead>
@@ -60,7 +75,7 @@ export default function Receipt({ receipt, onClose }) {
               ${receipt.items
                 .map(
                   (item) =>
-                    `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${Number(item.price).toLocaleString(
+                    `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity}</td><td>${Number(item.price).toLocaleString(
                       "en-BD"
                     )}</td><td>${(Number(item.price) * Number(item.quantity)).toLocaleString("en-BD")}</td></tr>`
                 )
@@ -69,7 +84,7 @@ export default function Receipt({ receipt, onClose }) {
           </table>
           <div class="totals">
             <p>Subtotal: BDT ${receipt.subtotal.toLocaleString("en-BD")}</p>
-            <p>Discount: BDT ${receipt.discount.toLocaleString("en-BD")}</p>
+            <p>Discount (${Math.round(Number(receipt.discountRate || 0) * 100)}%): BDT ${receipt.discount.toLocaleString("en-BD")}</p>
             <p>Tax: BDT ${receipt.taxAmount.toLocaleString("en-BD")}</p>
             <p><strong>Total: BDT ${receipt.total.toLocaleString("en-BD")}</strong></p>
           </div>
@@ -114,6 +129,9 @@ export default function Receipt({ receipt, onClose }) {
 
         <div className="mt-5 space-y-2 text-sm text-slate-300">
           <p>Order ID: #{receipt.orderId}</p>
+          <p>Customer ID: {receipt.customerId || "N/A"}</p>
+          <p>Customer: {receipt.customerName || "N/A"}</p>
+          <p>Phone: {receipt.customerPhone || "N/A"}</p>
           <p>Transaction ID: {receipt.transactionId || "N/A"}</p>
           <p>Payment Method: {receipt.paymentMethod}</p>
         </div>
@@ -137,7 +155,7 @@ export default function Receipt({ receipt, onClose }) {
             <span>BDT {receipt.subtotal.toLocaleString("en-BD")}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span>Discount</span>
+            <span>Discount ({Math.round(Number(receipt.discountRate || 0) * 100)}%)</span>
             <span>BDT {receipt.discount.toLocaleString("en-BD")}</span>
           </div>
           <div className="flex items-center justify-between">

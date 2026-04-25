@@ -19,11 +19,13 @@ import AdminProducts from "./pages/Products";
 import AdminCategories from "./pages/Categories";
 import AdminOrders from "./pages/Orders";
 import AdminPayments from "./pages/Payments";
+import AdminSellerEarnings from "./pages/AdminSellerEarnings";
 import CreateSeller from "./pages/CreateSeller";
 import Sellers from "./pages/Sellers";
 import Settings from "./pages/Settings";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProducts from "./pages/SellerProducts";
+import SellerEarnings from "./pages/SellerEarnings";
 import AddProduct from "./pages/AddProduct";
 import SellerPOS from "./pages/SellerPOS";
 import { getMaintenanceAccess, getPublicMaintenanceStatus } from "./api";
@@ -210,6 +212,7 @@ export default function App() {
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="payments" element={<AdminPayments />} />
+                <Route path="seller-earnings" element={<AdminSellerEarnings />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
             </Route>
@@ -218,7 +221,9 @@ export default function App() {
                 <Route index element={<SellerDashboard />} />
                 <Route path="products" element={<SellerProducts />} />
                 <Route path="add-product" element={<AddProduct />} />
+                <Route path="bulk-upload" element={<Navigate to="/seller/add-product" replace />} />
                 <Route path="pos" element={<SellerPOS />} />
+                <Route path="earnings" element={<SellerEarnings />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -29,7 +29,7 @@ export class Product {
   isApproved: boolean;
 
   // 🖼️ NEW (image support)
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   image: string | null;
 
   // ⭐ NEW (rating system future use)

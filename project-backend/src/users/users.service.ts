@@ -1,18 +1,23 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Role, User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { Order } from '../orders/entities/order.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private repo: Repository<User>,
+
+    @InjectRepository(Order)
+    private orderRepo: Repository<Order>,
   ) {}
 
   private toPublicUser(user: User) {
@@ -27,21 +32,40 @@ export class UsersService {
   }
 
   async create(data: Partial<User>) {
+    const nextData = { ...data };
+    if (nextData.phone !== undefined) {
+      nextData.phone = this.normalizePhone(String(nextData.phone)) || null;
+    }
+
     const existing = await this.repo.findOne({
-      where: { email: data.email },
+      where: { email: nextData.email },
     });
 
     if (existing) {
       throw new ConflictException('Email already exists');
     }
 
-    const user = this.repo.create(data);
+    if (nextData.phone) {
+      const existingPhone = await this.repo.findOne({
+        where: { phone: nextData.phone },
+      });
+
+      if (existingPhone) {
+        throw new ConflictException('Phone already exists');
+      }
+    }
+
+    const user = this.repo.create(nextData);
     return this.repo.save(user);
   }
 
   async findAll() {
     const users = await this.repo.find();
     return users.map((user) => this.toPublicUser(user));
+  }
+
+  normalizePhone(phone: string) {
+    return String(phone || '').replace(/[^\d+]/g, '').trim();
   }
 
   findByEmail(email: string) {
@@ -52,6 +76,95 @@ export class UsersService {
     const user = await this.repo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async lookupCustomerByPhone(phone: string) {
+    const normalizedPhone = this.normalizePhone(phone);
+
+    if (normalizedPhone.length < 4) {
+      return {
+        found: false,
+        customer: null,
+        purchaseCount: 0,
+        discountRate: 0,
+      };
+    }
+
+    const customer = await this.repo.findOne({
+      where: {
+        phone: normalizedPhone,
+        role: Role.CUSTOMER,
+      },
+    });
+
+    if (!customer) {
+      return {
+        found: false,
+        customer: null,
+        purchaseCount: 0,
+        discountRate: 0.03,
+      };
+    }
+
+    const purchaseCount = await this.countPaidCustomerOrders(customer.id);
+
+    return {
+      found: true,
+      customer: this.toPublicUser(customer),
+      purchaseCount,
+      discountRate: purchaseCount > 0 ? 0.05 : 0.03,
+    };
+  }
+
+  async findOrCreatePosCustomer(fullName: string, phone: string) {
+    const normalizedPhone = this.normalizePhone(phone);
+    const normalizedName = String(fullName || '').trim();
+
+    if (!normalizedName) {
+      throw new BadRequestException('Customer name is required');
+    }
+
+    if (!normalizedPhone) {
+      throw new BadRequestException('Customer phone is required');
+    }
+
+    const existing = await this.repo.findOne({
+      where: {
+        phone: normalizedPhone,
+        role: Role.CUSTOMER,
+      },
+    });
+
+    if (existing) {
+      const purchaseCount = await this.countPaidCustomerOrders(existing.id);
+      return {
+        customer: existing,
+        purchaseCount,
+        discountRate: purchaseCount > 0 ? 0.05 : 0.03,
+      };
+    }
+
+    const password = await bcrypt.hash(
+      `${normalizedPhone}-${Date.now()}-${Math.random()}`,
+      10,
+    );
+
+    const emailPhonePart = normalizedPhone.replace(/\D/g, '') || String(Date.now());
+    const customer = this.repo.create({
+      fullName: normalizedName,
+      email: `pos-${emailPhonePart}@techkhor.local`,
+      phone: normalizedPhone,
+      password,
+      role: Role.CUSTOMER,
+    });
+
+    const saved = await this.repo.save(customer);
+
+    return {
+      customer: saved,
+      purchaseCount: 0,
+      discountRate: 0.03,
+    };
   }
 
   async findOne(id: number) {
@@ -67,6 +180,23 @@ export class UsersService {
       nextData.password = await bcrypt.hash(nextData.password, 10);
     } else {
       delete nextData.password;
+    }
+
+    if (nextData.phone !== undefined) {
+      nextData.phone = this.normalizePhone(String(nextData.phone)) || null;
+
+      if (nextData.phone) {
+        const existingPhone = await this.repo.findOne({
+          where: {
+            phone: nextData.phone,
+            id: Not(id),
+          },
+        });
+
+        if (existingPhone) {
+          throw new ConflictException('Phone already exists');
+        }
+      }
     }
 
     Object.assign(user, nextData);
@@ -136,5 +266,14 @@ export class UsersService {
     seller.canAccessDuringMaintenance = enabled;
     const saved = await this.repo.save(seller);
     return this.toPublicUser(saved);
+  }
+
+  private countPaidCustomerOrders(customerId: number) {
+    return this.orderRepo.count({
+      where: {
+        customer: { id: customerId },
+        status: 'paid',
+      },
+    });
   }
 }

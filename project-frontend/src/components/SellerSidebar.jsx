@@ -9,6 +9,7 @@ const navItems = [
   { label: "My Products", to: "/seller/products" },
   { label: "Add Product", to: "/seller/add-product" },
   { label: "POS Billing", to: "/seller/pos" },
+  { label: "Earnings", to: "/seller/earnings" },
 ];
 
 export default function SellerSidebar({ open, onClose }) {

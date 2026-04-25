@@ -10,6 +10,12 @@ import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { CartService } from '../cart/cart.service';
 import { Product } from '../products/entities/product.entity';
+import { UsersService } from '../users/users.service';
+
+type OrderCustomerInfo = {
+  customerName?: string;
+  customerPhone?: string;
+};
 
 @Injectable()
 export class OrdersService {
@@ -24,6 +30,7 @@ export class OrdersService {
     private productRepo: Repository<Product>,
 
     private cartService: CartService,
+    private usersService: UsersService,
   ) { }
 
   // 🔥 Cart → Order (MAIN FLOW)
@@ -60,14 +67,39 @@ export class OrdersService {
   }
 
   async createFromItems(
-    userId: number,
+    user: { id: number; role?: string },
     items: Array<{ productId: number; quantity: number }>,
+    customerInfo: OrderCustomerInfo = {},
   ) {
     if (!Array.isArray(items) || items.length === 0) {
       throw new BadRequestException('Items are required');
     }
 
+    const userId = Number(user.id);
+    const isSellerOrder = user.role === 'seller';
+    const customerName = String(customerInfo.customerName || '').trim();
+    const customerPhone = String(customerInfo.customerPhone || '').trim();
+    let posCustomer: Awaited<ReturnType<UsersService['findOrCreatePosCustomer']>> | null = null;
+
+    if (isSellerOrder && !customerName) {
+      throw new BadRequestException('Customer name is required');
+    }
+
+    if (isSellerOrder && !customerPhone) {
+      throw new BadRequestException('Customer phone is required');
+    }
+
+    if (isSellerOrder) {
+      posCustomer = await this.usersService.findOrCreatePosCustomer(
+        customerName,
+        customerPhone,
+      );
+    }
+
     const orderItems: OrderItem[] = [];
+    let totalBeforeDiscount = 0;
+    let totalAfterDiscount = 0;
+    const discountRate = posCustomer?.discountRate || 0;
 
     for (const entry of items) {
       const quantity = Number(entry?.quantity || 0);
@@ -77,12 +109,18 @@ export class OrdersService {
         throw new BadRequestException('Invalid product item in order');
       }
 
-      const product = await this.productRepo.findOne({ where: { id: productId } });
+      const product = await this.productRepo.findOne({
+        where: { id: productId },
+        relations: ['seller'],
+      });
       if (!product) {
         throw new NotFoundException(`Product not found: ${productId}`);
       }
 
-      if (!product.isApproved) {
+      const isOwnSellerProduct =
+        isSellerOrder && Number(product.seller?.id) === Number(userId);
+
+      if (!product.isApproved && !isOwnSellerProduct) {
         throw new BadRequestException(`Product not approved: ${product.name}`);
       }
 
@@ -90,11 +128,17 @@ export class OrdersService {
         throw new BadRequestException(`Insufficient stock for ${product.name}`);
       }
 
+      const originalPrice = Number(product.price);
+      const discountedPrice = this.roundMoney(originalPrice * (1 - discountRate));
+
+      totalBeforeDiscount += originalPrice * quantity;
+      totalAfterDiscount += discountedPrice * quantity;
+
       orderItems.push(
         this.itemRepo.create({
           product: { id: product.id } as Product,
           quantity,
-          price: Number(product.price),
+          price: discountedPrice,
         }),
       );
 
@@ -102,13 +146,19 @@ export class OrdersService {
       await this.productRepo.save(product);
     }
 
-    const total = orderItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+    const total = this.roundMoney(totalAfterDiscount);
+    const customerDiscountAmount = this.roundMoney(totalBeforeDiscount - totalAfterDiscount);
 
     const order = this.orderRepo.create({
       user: { id: userId },
+      customer: posCustomer ? { id: posCustomer.customer.id } : null,
       items: orderItems,
       totalPrice: total,
       status: 'pending',
+      customerName: customerName || posCustomer?.customer.fullName || null,
+      customerPhone: this.usersService.normalizePhone(customerPhone) || null,
+      customerDiscountAmount,
+      customerDiscountRate: discountRate,
     });
 
     return this.orderRepo.save(order);
@@ -117,15 +167,15 @@ export class OrdersService {
   // ✅ Get My Orders
   async findMyOrders(userId: number) {
     return this.orderRepo.find({
-      where: { user: { id: userId } },
-      relations: ['items', 'items.product'],
+      where: [{ user: { id: userId } }, { customer: { id: userId } }],
+      relations: ['items', 'items.product', 'customer'],
     });
   }
 
   // ✅ Get Single Order
   async findAllForAdmin() {
     return this.orderRepo.find({
-      relations: ['user', 'items', 'items.product'],
+      relations: ['user', 'customer', 'items', 'items.product'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -133,7 +183,7 @@ export class OrdersService {
   async findOne(id: number) {
     const order = await this.orderRepo.findOne({
       where: { id },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'customer'],
     });
 
     if (!order) {
@@ -162,5 +212,9 @@ export class OrdersService {
     await this.orderRepo.remove(order);
 
     return { message: 'Order deleted' };
+  }
+
+  private roundMoney(value: number) {
+    return Number(value.toFixed(2));
   }
 }

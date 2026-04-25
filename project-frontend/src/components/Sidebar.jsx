@@ -11,6 +11,7 @@ const navItems = [
   { label: "Categories", to: "/admin/categories" },
   { label: "Orders", to: "/admin/orders" },
   { label: "Payments", to: "/admin/payments" },
+  { label: "Seller Earnings", to: "/admin/seller-earnings" },
   { label: "Settings", to: "/admin/settings" },
 ];
 

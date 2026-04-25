@@ -6,8 +6,9 @@ import SellerSidebar from "./SellerSidebar";
 const titles = {
   "/seller": { title: "Dashboard", subtitle: "Track your products and order activity" },
   "/seller/products": { title: "My Products", subtitle: "Review submitted products and approval status" },
-  "/seller/add-product": { title: "Add Product", subtitle: "Create a new product for TechKhor marketplace" },
+  "/seller/add-product": { title: "Add Product", subtitle: "Create products manually or import them from Excel" },
   "/seller/pos": { title: "Seller POS", subtitle: "Create bills, process payments, and print receipt" },
+  "/seller/earnings": { title: "Earnings", subtitle: "Track sales, commission, and payout status" },
 };
 
 export default function SellerLayout() {

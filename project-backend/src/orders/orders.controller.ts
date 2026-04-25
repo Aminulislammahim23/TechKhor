@@ -6,6 +6,7 @@ import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -13,9 +14,15 @@ export class OrdersController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Req() req, @Body() body: { items?: Array<{ productId: number; quantity: number }> }) {
+  async create(
+    @Req() req,
+    @Body() body: CreateOrderDto,
+  ) {
     if (Array.isArray(body?.items) && body.items.length > 0) {
-      return this.service.createFromItems(req.user.id, body.items);
+      return this.service.createFromItems(req.user, body.items, {
+        customerName: body.customerName,
+        customerPhone: body.customerPhone,
+      });
     }
 
     return this.service.createFromCart(req.user.id);

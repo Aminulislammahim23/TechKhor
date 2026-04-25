@@ -9,6 +9,7 @@ const titles = {
   "/admin/categories": { title: "Categories", subtitle: "Create and manage product categories" },
   "/admin/orders": { title: "Orders", subtitle: "Monitor customer purchases and fulfillment status" },
   "/admin/payments": { title: "Payments", subtitle: "Follow payment flow across every transaction" },
+  "/admin/seller-earnings": { title: "Seller Earnings", subtitle: "Review seller sales, commissions, and payouts" },
   "/admin/settings": { title: "Settings", subtitle: "Manage admin profile and server maintenance mode" },
 };
 

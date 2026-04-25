@@ -81,8 +81,18 @@ api.interceptors.response.use(
 
 export const register = (payload) => api.post("/auth/register", payload);
 export const login = (payload) => api.post("/auth/login", payload);
+export const lookupCustomerByPhone = (phone) => api.get("/users/customers/lookup", { params: { phone } });
 export const getProducts = (params) => api.get("/products", { params });
+export const getSellerPosProducts = (params) => api.get("/products/seller/pos-search", { params });
 export const createProduct = (payload) => api.post("/products", payload);
+export const uploadProducts = (file, onUploadProgress) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return api.post("/products/upload-products", formData, {
+    onUploadProgress,
+  });
+};
 export const createOrderFromCart = () => api.post("/orders/from-cart");
 export const createOrder = (payload) => api.post("/orders", payload);
 export const getMyOrders = () => api.get("/orders/my");
@@ -90,6 +100,8 @@ export const getAdminOrders = () => api.get("/orders/admin");
 export const createPayment = (payload) => api.post("/payments", payload);
 export const getPayments = () => api.get("/payments");
 export const getAdminPayments = () => api.get("/payments/admin");
+export const getSellerEarnings = () => api.get("/seller/earnings");
+export const getAdminSellerEarnings = () => api.get("/admin/seller-earnings");
 export const getMaintenanceStatus = () => api.get("/admin/settings/maintenance");
 export const updateMaintenanceStatus = (maintenanceMode) =>
   api.patch("/admin/settings/maintenance", { maintenanceMode });

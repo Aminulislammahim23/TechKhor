@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './entities/payment.entity';
+import { EarningsService } from '../earnings/earnings.service';
 
 @Injectable()
 export class PaymentsService {
@@ -15,6 +16,7 @@ export class PaymentsService {
     @InjectRepository(Payment)
     private paymentRepo: Repository<Payment>,
     private ordersService: OrdersService,
+    private earningsService: EarningsService,
   ) {}
 
   async create(userId: number, dto: CreatePaymentDto) {
@@ -48,7 +50,16 @@ export class PaymentsService {
       await this.ordersService.markAsPaid(dto.orderId);
     }
 
-    return this.paymentRepo.save(payment);
+    const savedPayment = await this.paymentRepo.save(payment);
+
+    if (savedPayment.status === 'success') {
+      await this.earningsService.generateForSuccessfulPayment(
+        savedPayment.id,
+        dto.orderId,
+      );
+    }
+
+    return savedPayment;
   }
 
   async findAll(userId: number) {
