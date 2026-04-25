@@ -1,44 +1,45 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { setAuthToken } from "../hooks/useAuth";
+import { setAuthToken, useAuth } from "../hooks/useAuth";
+import { getCurrentUserIdFromToken } from "../utils/jwt";
+import { getUserById } from "../api/users.api";
 
 const navItems = [
-  { label: "Dashboard", to: "/admin" },
-  { label: "Create Seller", to: "/admin/create-seller" },
-  { label: "Sellers", to: "/admin/sellers" },
-  { label: "Users", to: "/admin/users" },
-  { label: "Products", to: "/admin/products" },
-  { label: "Categories", to: "/admin/categories" },
-  { label: "Orders", to: "/admin/orders" },
-  { label: "Payments", to: "/admin/payments" },
-  { label: "Settings", to: "/admin/settings" },
+  { label: "Dashboard", to: "/seller" },
+  { label: "My Products", to: "/seller/products" },
+  { label: "Add Product", to: "/seller/add-product" },
+  { label: "POS Billing", to: "/seller/pos" },
 ];
 
-export default function Sidebar({ open, onClose }) {
+export default function SellerSidebar({ open, onClose }) {
   const navigate = useNavigate();
-  const [now, setNow] = useState(() => new Date());
+  const { token } = useAuth();
+  const [sellerName, setSellerName] = useState("Seller");
+  const sellerId = getCurrentUserIdFromToken(token);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(new Date());
-    }, 1000);
+    let active = true;
+
+    async function loadSeller() {
+      if (!sellerId) return;
+      try {
+        const response = await getUserById(sellerId);
+        if (active) {
+          setSellerName(response?.data?.fullName || "Seller");
+        }
+      } catch {
+        if (active) {
+          setSellerName("Seller");
+        }
+      }
+    }
+
+    loadSeller();
 
     return () => {
-      window.clearInterval(timer);
+      active = false;
     };
-  }, []);
-
-  const currentDate = now.toLocaleDateString(undefined, {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-  const currentTime = now.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  }, [sellerId]);
 
   const handleLogout = () => {
     setAuthToken(null);
@@ -56,12 +57,9 @@ export default function Sidebar({ open, onClose }) {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between">
             <div>
-              <img
-                src="/main-logo.jpeg"
-                alt="TechKhor logo"
-                className="h-12 w-auto rounded-xl object-contain"
-              />
-              <h1 className="mt-3 text-2xl font-semibold text-white">Admin Panel</h1>
+              <img src="/main-logo.jpeg" alt="TechKhor logo" className="h-12 w-auto rounded-xl object-contain" />
+              <h1 className="mt-3 text-2xl font-semibold text-white">Seller Panel</h1>
+              <p className="mt-1 text-sm text-cyan-300">{sellerName}</p>
             </div>
             <button
               type="button"
@@ -77,7 +75,7 @@ export default function Sidebar({ open, onClose }) {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === "/admin"}
+                end={item.to === "/seller"}
                 className={({ isActive }) =>
                   [
                     "group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
@@ -101,13 +99,6 @@ export default function Sidebar({ open, onClose }) {
               Logout
             </button>
           </nav>
-
-          <div className="mt-auto rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 to-emerald-400/10 p-5">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-4">
-              <p className="text-sm font-medium text-white">{currentDate}</p>
-              <p className="mt-2 text-2xl font-semibold text-cyan-300">{currentTime}</p>
-            </div>
-          </div>
         </div>
       </aside>
 

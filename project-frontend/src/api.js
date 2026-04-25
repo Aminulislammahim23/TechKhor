@@ -84,8 +84,16 @@ export const login = (payload) => api.post("/auth/login", payload);
 export const getProducts = (params) => api.get("/products", { params });
 export const createProduct = (payload) => api.post("/products", payload);
 export const createOrderFromCart = () => api.post("/orders/from-cart");
+export const createOrder = (payload) => api.post("/orders", payload);
 export const getMyOrders = () => api.get("/orders/my");
+export const getAdminOrders = () => api.get("/orders/admin");
 export const createPayment = (payload) => api.post("/payments", payload);
 export const getPayments = () => api.get("/payments");
+export const getAdminPayments = () => api.get("/payments/admin");
+export const getMaintenanceStatus = () => api.get("/admin/settings/maintenance");
+export const updateMaintenanceStatus = (maintenanceMode) =>
+  api.patch("/admin/settings/maintenance", { maintenanceMode });
+export const getPublicMaintenanceStatus = () => api.get("/maintenance/status");
+export const getMaintenanceAccess = () => api.get("/maintenance/access");
 
 export default api;

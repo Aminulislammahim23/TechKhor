@@ -5,6 +5,7 @@ const initialState = {
   fullName: "",
   email: "",
   password: "",
+  confirmPassword: "",
 };
 
 export default function CreateSeller() {
@@ -22,6 +23,11 @@ export default function CreateSeller() {
     event.preventDefault();
     setError("");
     setMessage("");
+
+    if (form.password !== form.confirmPassword) {
+      setError("Password and confirm password must be the same.");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -87,16 +93,31 @@ export default function CreateSeller() {
 
         <div>
           <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-300">
-            Password
+            Set Password
           </label>
           <input
             id="password"
             name="password"
-            type="password"
+            type="text"
             value={form.password}
             onChange={handleChange}
             className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
             placeholder="Create a secure password"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-slate-300">
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="text"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+            placeholder="Re-enter the same password"
           />
         </div>
 

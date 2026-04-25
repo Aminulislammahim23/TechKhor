@@ -1,19 +1,21 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from './entities/product.entity';
 import { Repository, Like } from 'typeorm';
+import { Product } from './entities/product.entity';
+import { Category } from '../categories/entities/category.entity';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private repo: Repository<Product>,
-  ) { }
 
-  // 🔥 SEARCH + PAGINATION
+    @InjectRepository(Category)
+    private categoryRepo: Repository<Category>,
+  ) {}
+
   async findAll(query: any) {
     const { page = 1, limit = 10, search = '' } = query;
 
@@ -34,7 +36,6 @@ export class ProductsService {
     };
   }
 
-  // ✅ Single Product
   async findOne(id: number) {
     const product = await this.repo.findOne({
       where: { id },
@@ -48,30 +49,58 @@ export class ProductsService {
     return product;
   }
 
-  // ✅ Create
-  create(dto: any, user: any) {
+  async create(dto: CreateProductDto, user: any) {
+    const category = await this.categoryRepo.findOne({
+      where: { id: dto.categoryId },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
     const product = this.repo.create({
-      ...dto,
+      name: dto.name,
+      description: dto.description,
+      price: dto.price,
+      stock: dto.stock,
+      image: dto.image || null,
       seller: user,
+      category,
+      isApproved: false,
     });
 
     return this.repo.save(product);
   }
 
-  // ✅ Update
-  async update(id: number, dto: any) {
+  async update(id: number, dto: UpdateProductDto) {
     const product = await this.findOne(id);
-    Object.assign(product, dto);
+
+    if (dto.categoryId !== undefined) {
+      const category = await this.categoryRepo.findOne({
+        where: { id: dto.categoryId },
+      });
+
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+
+      product.category = category;
+    }
+
+    if (dto.name !== undefined) product.name = dto.name;
+    if (dto.description !== undefined) product.description = dto.description;
+    if (dto.price !== undefined) product.price = dto.price;
+    if (dto.stock !== undefined) product.stock = dto.stock;
+    if (dto.image !== undefined) product.image = dto.image || null;
+
     return this.repo.save(product);
   }
 
-  // ✅ Delete
   async remove(id: number) {
     const product = await this.findOne(id);
     return this.repo.remove(product);
   }
 
-  // 🔥 Admin approve
   async approve(id: number) {
     const product = await this.findOne(id);
     product.isApproved = true;

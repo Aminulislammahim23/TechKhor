@@ -6,8 +6,10 @@ const titles = {
   "/admin/sellers": { title: "Sellers", subtitle: "Manage created seller accounts" },
   "/admin/users": { title: "Users", subtitle: "Track registered customers and activity" },
   "/admin/products": { title: "Products", subtitle: "Review listings and approve product submissions" },
+  "/admin/categories": { title: "Categories", subtitle: "Create and manage product categories" },
   "/admin/orders": { title: "Orders", subtitle: "Monitor customer purchases and fulfillment status" },
   "/admin/payments": { title: "Payments", subtitle: "Follow payment flow across every transaction" },
+  "/admin/settings": { title: "Settings", subtitle: "Manage admin profile and server maintenance mode" },
 };
 
 export default function Topbar({ onMenuClick }) {
@@ -43,8 +45,12 @@ export default function Topbar({ onMenuClick }) {
           <button type="button" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-cyan-400/10">
             Notifications
           </button>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-emerald-400 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20">
-            TK
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-cyan-500/20">
+            <img
+              src="/main-logo.jpeg"
+              alt="TechKhor logo"
+              className="h-full w-full object-cover"
+            />
           </div>
         </div>
       </div>

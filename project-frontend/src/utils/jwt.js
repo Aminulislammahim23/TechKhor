@@ -19,3 +19,8 @@ export function decodeJwtPayload(token) {
 export function getCurrentRoleFromToken(token) {
   return decodeJwtPayload(token)?.role || null;
 }
+
+export function getCurrentUserIdFromToken(token) {
+  const sub = decodeJwtPayload(token)?.sub;
+  return typeof sub === "number" ? sub : Number(sub) || null;
+}

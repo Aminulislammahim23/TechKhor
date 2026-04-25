@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login, normalizeApiError } from "../api";
 import { setAuthToken, useAuth } from "../hooks/useAuth";
+import { getCurrentRoleFromToken } from "../utils/jwt";
 
 const initialState = {
   email: "",
@@ -11,7 +12,7 @@ const initialState = {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [form, setForm] = useState(initialState);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
@@ -19,9 +20,16 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(location.state?.from?.pathname || "/products", { replace: true });
+      const role = getCurrentRoleFromToken(token);
+      const fromPath =
+        typeof location.state?.from === "string"
+          ? location.state.from
+          : location.state?.from?.pathname;
+
+      const fallbackPath = role === "admin" ? "/admin" : role === "seller" ? "/seller" : "/products";
+      navigate(fromPath || fallbackPath, { replace: true });
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, navigate, location.state, token]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -58,7 +66,14 @@ export default function Login() {
       }
 
       setAuthToken(token);
-      navigate(location.state?.from?.pathname || "/products", { replace: true });
+      const role = getCurrentRoleFromToken(token);
+      const fromPath =
+        typeof location.state?.from === "string"
+          ? location.state.from
+          : location.state?.from?.pathname;
+
+      const fallbackPath = role === "admin" ? "/admin" : role === "seller" ? "/seller" : "/products";
+      navigate(fromPath || fallbackPath, { replace: true });
     } catch (error) {
       setServerError(normalizeApiError(error));
     } finally {

@@ -32,6 +32,9 @@ export class User{
     })
     role: Role;
 
+    @Column({ default: false })
+    canAccessDuringMaintenance: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 }

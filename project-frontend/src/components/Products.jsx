@@ -14,9 +14,15 @@ export default function Products({ products = [], title = "Featured Products", s
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {products.map((product) => (
-          <ProductCard key={product.id || product._id || product.slug || product.name} product={product} />
-        ))}
+        {products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard key={product.id || product._id || product.slug || product.name} product={product} />
+          ))
+        ) : (
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300 md:col-span-2 xl:col-span-4">
+            No featured products are available right now.
+          </div>
+        )}
       </div>
     </section>
   );

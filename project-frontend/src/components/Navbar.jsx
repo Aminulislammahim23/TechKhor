@@ -6,6 +6,8 @@ import { getCurrentRoleFromToken } from "../utils/jwt";
 const publicLinks = [
   { label: "Home", to: "/" },
   { label: "Products", to: "/products" },
+  { label: "Best Deals", to: "/best-deals" },
+  { label: "PC Builder", to: "/pc-builder" },
 ];
 
 const authenticatedLinks = [
@@ -24,6 +26,7 @@ export default function Navbar() {
   const { isAuthenticated, token } = useAuth();
   const role = getCurrentRoleFromToken(token);
   const isAdmin = role === "admin";
+  const isSeller = role === "seller";
 
   const handleLogout = () => {
     setAuthToken(null);
@@ -34,25 +37,23 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 font-black text-slate-950 shadow-lg shadow-cyan-500/20">
-            TK
-          </span>
-          <div>
-            <p className="text-lg font-bold tracking-tight text-white">TechKhor</p>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Tech accessories</p>
-          </div>
+        <Link to="/" className="flex items-center">
+          <img
+            src="/main-logo.jpeg"
+            alt="TechKhor logo"
+            className="h-11 w-auto rounded-xl object-contain"
+          />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          {!isAdmin
+          {!isAdmin && !isSeller
             ? publicLinks.map((item) => (
                 <NavLink key={item.label} to={item.to} className={navClass}>
                   {item.label}
                 </NavLink>
               ))
             : null}
-          {!isAdmin && isAuthenticated
+          {!isAdmin && !isSeller && isAuthenticated
             ? authenticatedLinks.map((item) => (
                 <NavLink key={item.label} to={item.to} className={navClass}>
                   {item.label}
@@ -113,7 +114,7 @@ export default function Navbar() {
       {open ? (
         <div className="border-t border-white/10 bg-slate-950/95 px-4 py-4 md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-4">
-            {!isAdmin
+            {!isAdmin && !isSeller
               ? publicLinks.map((item) => (
                   <NavLink
                     key={item.label}
@@ -125,7 +126,7 @@ export default function Navbar() {
                   </NavLink>
                 ))
               : null}
-            {!isAdmin && isAuthenticated
+            {!isAdmin && !isSeller && isAuthenticated
               ? authenticatedLinks.map((item) => (
                   <NavLink
                     key={item.label}

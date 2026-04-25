@@ -40,10 +40,10 @@ export class PaymentsService {
       transactionId: null,
     });
 
-    // 4. If method = 'mock', process immediately
-    if (dto.method === 'mock') {
+    // 4. For POS-friendly methods, process immediately
+    if (['mock', 'cash', 'card'].includes(String(dto.method).toLowerCase())) {
       payment.status = 'success';
-      payment.transactionId = 'TXN-MOCK-' + Date.now();
+      payment.transactionId = `TXN-${String(dto.method || 'mock').toUpperCase()}-${Date.now()}`;
 
       await this.ordersService.markAsPaid(dto.orderId);
     }
@@ -55,6 +55,13 @@ export class PaymentsService {
     return this.paymentRepo.find({
       where: { user: { id: userId } },
       relations: ['order'],
+    });
+  }
+
+  async findAllForAdmin() {
+    return this.paymentRepo.find({
+      relations: ['order', 'user'],
+      order: { createdAt: 'DESC' },
     });
   }
 

@@ -30,7 +30,7 @@ export class Product {
 
   // 🖼️ NEW (image support)
   @Column({ nullable: true })
-  image: string;
+  image: string | null;
 
   // ⭐ NEW (rating system future use)
   @Column({ default: 0 })
