@@ -32,6 +32,7 @@ describe('AuthController', () => {
     const dto = {
       fullName: 'Test User',
       email: 'test@example.com',
+      phone: '01700111222',
       password: 'secret',
     };
     authService.register.mockResolvedValue({ id: 1, ...dto });

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { addToCart } from "../utils/cart";
 import { getProducts, normalizeApiError } from "../api";
@@ -9,7 +10,28 @@ function unwrapProducts(responseData) {
   return [];
 }
 
+function normalizeValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function matchesCategory(product, categoryName, categoryId) {
+  if (!categoryName && !categoryId) return true;
+
+  const productCategoryId = String(product?.category?.id ?? product?.categoryId ?? "");
+  const productCategoryName = normalizeValue(product?.category?.name ?? product?.categoryName);
+  const requestedName = normalizeValue(categoryName);
+  const requestedId = String(categoryId || "");
+
+  return (
+    (requestedId && productCategoryId === requestedId) ||
+    (requestedName && productCategoryName === requestedName)
+  );
+}
+
 export default function StoreProducts() {
+  const [searchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category") || "";
+  const selectedCategoryId = searchParams.get("categoryId") || "";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,9 +45,19 @@ export default function StoreProducts() {
       try {
         setLoading(true);
         setError("");
-        const response = await getProducts();
+        const response = await getProducts({
+          limit: 100,
+          category: selectedCategory,
+          categoryId: selectedCategoryId,
+        });
+
         if (active) {
-          setProducts(unwrapProducts(response.data));
+          const allProducts = unwrapProducts(response.data);
+          setProducts(
+            allProducts.filter((product) =>
+              matchesCategory(product, selectedCategory, selectedCategoryId)
+            )
+          );
         }
       } catch (err) {
         if (active) {
@@ -44,7 +76,7 @@ export default function StoreProducts() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [selectedCategory, selectedCategoryId]);
 
   useEffect(() => () => {
     if (successTimerRef.current) {
@@ -66,10 +98,26 @@ export default function StoreProducts() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Catalog</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Products</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Catalog</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">
+              {selectedCategory ? selectedCategory : "Products"}
+            </h1>
+          </div>
+          {selectedCategory ? (
+            <Link
+              to="/products"
+              className="w-fit rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:border-cyan-400/40 hover:bg-white/5"
+            >
+              All Products
+            </Link>
+          ) : null}
+        </div>
         <p className="mt-4 max-w-2xl text-slate-400">
-          Browse the live TechKhor catalog and add items to your cart before placing an order.
+          {selectedCategory
+            ? `Browse ${selectedCategory} products and add your favorites to the cart.`
+            : "Browse the live TechKhor catalog and add items to your cart before placing an order."}
         </p>
       </div>
 
@@ -93,7 +141,9 @@ export default function StoreProducts() {
 
       {!loading && products.length === 0 ? (
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">
-          No products are available right now.
+          {selectedCategory
+            ? `No products are available in ${selectedCategory} right now.`
+            : "No products are available right now."}
         </div>
       ) : null}
 

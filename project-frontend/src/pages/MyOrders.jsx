@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { getMyOrders, normalizeApiError } from "../api";
 
 function formatDate(value) {
@@ -11,7 +10,6 @@ function formatDate(value) {
 }
 
 export default function MyOrders() {
-  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,28 +44,13 @@ export default function MyOrders() {
     };
   }, []);
 
-  const handlePayNow = (order) => {
-    navigate("/payment", {
-      state: {
-        orderId: order.id,
-        amount: Number(order.totalPrice),
-      },
-    });
-  };
-
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Orders</p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">My orders</h1>
-          <p className="mt-4 max-w-2xl text-slate-400">
-            Track the orders created from your cart and jump straight to payment when needed.
-          </p>
         </div>
-        <Link to="/products" className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5">
-          Back to products
-        </Link>
       </div>
 
       {error ? (
@@ -104,13 +87,6 @@ export default function MyOrders() {
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${order.status === "paid" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
                   {order.status}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handlePayNow(order)}
-                  className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-                >
-                  Pay Now
-                </button>
               </div>
             </div>
 

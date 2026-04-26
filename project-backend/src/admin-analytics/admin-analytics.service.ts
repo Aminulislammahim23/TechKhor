@@ -246,7 +246,7 @@ export class AdminAnalyticsService {
         },
         {
           title: 'Total Revenue',
-          value: `$${totalRevenue.toLocaleString('en-US')}`,
+          value: `BDT ${totalRevenue.toLocaleString('en-BD')}`,
           change: `${percentageChange(thisMonthRevenue, lastMonthRevenue) >= 0 ? '+' : ''}${percentageChange(thisMonthRevenue, lastMonthRevenue).toFixed(1)}% this month`,
           accent: 'from-amber-500/20 to-amber-400/10 text-amber-300',
         },
@@ -254,7 +254,7 @@ export class AdminAnalyticsService {
       analyticsSummary: [
         {
           label: 'Weekly revenue',
-          value: `$${Math.round(currentWeekRevenue).toLocaleString('en-US')}`,
+          value: `BDT ${Math.round(currentWeekRevenue).toLocaleString('en-BD')}`,
         },
         {
           label: 'Weekly orders',

@@ -1,19 +1,24 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import ProtectedRoute, { PublicRoute } from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import SellerRoute from "./components/SellerRoute";
 import AdminLayout from "./components/AdminLayout";
 import SellerLayout from "./components/SellerLayout";
+import CustomerLayout from "./components/CustomerLayout";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Cart from "./pages/Cart";
+import MyOrders from "./pages/MyOrders";
 import StoreProducts from "./pages/StoreProducts";
 import ProductDetails from "./pages/ProductDetails";
-import MyOrders from "./pages/MyOrders";
+import PCBuilder from "./pages/PCBuilder";
 import Payment from "./pages/Payment";
 import Dashboard from "./pages/Dashboard";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import CustomerPayments from "./pages/CustomerPayments";
+import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import AdminProducts from "./pages/Products";
 import AdminCategories from "./pages/Categories";
@@ -29,11 +34,19 @@ import SellerEarnings from "./pages/SellerEarnings";
 import AddProduct from "./pages/AddProduct";
 import SellerPOS from "./pages/SellerPOS";
 import { getMaintenanceAccess, getPublicMaintenanceStatus } from "./api";
-import { useAuth } from "./hooks/useAuth";
+import { setAuthToken, useAuth } from "./hooks/useAuth";
 import { getCurrentRoleFromToken, getCurrentUserIdFromToken } from "./utils/jwt";
 import { useEffect, useState } from "react";
 
 function MaintenanceBlockedScreen() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-2xl rounded-3xl border border-amber-400/20 bg-amber-500/10 p-8 text-center shadow-xl">
@@ -41,6 +54,15 @@ function MaintenanceBlockedScreen() {
         <p className="mt-4 text-base text-amber-100">
           Please come back later. Access is temporarily unavailable at this time.
         </p>
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-6 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+          >
+            Logout
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -148,89 +170,126 @@ export default function App() {
     <BrowserRouter>
       <MaintenanceGate>
         <AdminPathGate>
-          <div className="min-h-screen bg-slate-950">
-            <Navbar />
-            <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/products"
-              element={<StoreProducts />}
-            />
-            <Route path="/best-deals" element={<Navigate to="/products" replace />} />
-            <Route path="/pc-builder" element={<Navigate to="/products" replace />} />
-            <Route
-              path="/products/:id"
-              element={<ProductDetails />}
-            />
-            <Route
-              path="/cart"
-              element={
-                <ProtectedRoute>
-                  <Cart />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <ProtectedRoute>
-                  <MyOrders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payment"
-              element={
-                <ProtectedRoute>
-                  <Payment />
-                </ProtectedRoute>
-              }
-            />
-            <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="create-seller" element={<CreateSeller />} />
-                <Route path="sellers" element={<Sellers />} />
-                <Route path="users" element={<Users />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="payments" element={<AdminPayments />} />
-                <Route path="seller-earnings" element={<AdminSellerEarnings />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
-            </Route>
-            <Route element={<SellerRoute />}>
-              <Route path="/seller" element={<SellerLayout />}>
-                <Route index element={<SellerDashboard />} />
-                <Route path="products" element={<SellerProducts />} />
-                <Route path="add-product" element={<AddProduct />} />
-                <Route path="bulk-upload" element={<Navigate to="/seller/add-product" replace />} />
-                <Route path="pos" element={<SellerPOS />} />
-                <Route path="earnings" element={<SellerEarnings />} />
-              </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
+          <AppFrame />
         </AdminPathGate>
       </MaintenanceGate>
     </BrowserRouter>
+  );
+}
+
+function AppFrame() {
+  const location = useLocation();
+  const dashboardPaths = ["/dashboard", "/payments", "/profile"];
+  const showNavbar =
+    !location.pathname.startsWith("/admin") &&
+    !location.pathname.startsWith("/seller") &&
+    !dashboardPaths.includes(location.pathname);
+
+  return (
+    <div className="min-h-screen bg-slate-950">
+      {showNavbar ? <Navbar /> : null}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
+        <Route path="/products" element={<StoreProducts />} />
+        <Route path="/best-deals" element={<Navigate to="/products" replace />} />
+        <Route path="/pc-builder" element={<PCBuilder />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <MyOrders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CustomerDashboard />} />
+        </Route>
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CustomerPayments />} />
+        </Route>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <CustomerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Profile />} />
+        </Route>
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          }
+        />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="create-seller" element={<CreateSeller />} />
+            <Route path="sellers" element={<Sellers />} />
+            <Route path="users" element={<Users />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="seller-earnings" element={<AdminSellerEarnings />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Route>
+        <Route element={<SellerRoute />}>
+          <Route path="/seller" element={<SellerLayout />}>
+            <Route index element={<SellerDashboard />} />
+            <Route path="products" element={<SellerProducts />} />
+            <Route path="add-product" element={<AddProduct />} />
+            <Route path="bulk-upload" element={<Navigate to="/seller/add-product" replace />} />
+            <Route path="pos" element={<SellerPOS />} />
+            <Route path="earnings" element={<SellerEarnings />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
   );
 }

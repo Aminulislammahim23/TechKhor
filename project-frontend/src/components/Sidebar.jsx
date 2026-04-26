@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { setAuthToken } from "../hooks/useAuth";
 
-const navItems = [
+const adminNavItems = [
   { label: "Dashboard", to: "/admin" },
   { label: "Create Seller", to: "/admin/create-seller" },
   { label: "Sellers", to: "/admin/sellers" },
@@ -15,9 +15,18 @@ const navItems = [
   { label: "Settings", to: "/admin/settings" },
 ];
 
-export default function Sidebar({ open, onClose }) {
+const customerNavItems = [
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "My Orders", to: "/orders" },
+  { label: "My Payments", to: "/payments" },
+  { label: "Profile", to: "/profile" },
+];
+
+export default function Sidebar({ open, onClose, variant = "admin" }) {
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
+  const isCustomer = variant === "customer";
+  const navItems = isCustomer ? customerNavItems : adminNavItems;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -62,7 +71,9 @@ export default function Sidebar({ open, onClose }) {
                 alt="TechKhor logo"
                 className="h-12 w-auto rounded-xl object-contain"
               />
-              <h1 className="mt-3 text-2xl font-semibold text-white">Admin Panel</h1>
+              <h1 className="mt-3 text-2xl font-semibold text-white">
+                {isCustomer ? "Customer Hub" : "Admin Panel"}
+              </h1>
             </div>
             <button
               type="button"
@@ -74,6 +85,16 @@ export default function Sidebar({ open, onClose }) {
           </div>
 
           <nav className="mt-10 space-y-2">
+            {isCustomer ? (
+              <NavLink
+                to="/"
+                className="group flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/15 hover:text-white"
+                onClick={onClose}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.5)] transition group-hover:scale-110" />
+                Back to Home
+              </NavLink>
+            ) : null}
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -103,12 +124,15 @@ export default function Sidebar({ open, onClose }) {
             </button>
           </nav>
 
-          <div className="mt-auto rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 to-emerald-400/10 p-5">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-4">
-              <p className="text-sm font-medium text-white">{currentDate}</p>
-              <p className="mt-2 text-2xl font-semibold text-cyan-300">{currentTime}</p>
+            <div className="mt-auto rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-400/10 to-emerald-400/10 p-5">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-4">
+                <p className="text-sm font-medium text-white">{currentDate}</p>
+                <p className="mt-2 text-2xl font-semibold text-cyan-300">{currentTime}</p>
+                {isCustomer ? (
+                  <p className="mt-2 text-xs text-slate-400">Welcome back to TechKhor</p>
+                ) : null}
+              </div>
             </div>
-          </div>
         </div>
       </aside>
 

@@ -35,6 +35,12 @@ export class Order {
   @Column({ type: 'varchar', nullable: true })
   customerPhone: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  deliveryType: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  deliveryAddress: string | null;
+
   @Column('decimal', { precision: 12, scale: 2, default: 0 })
   customerDiscountAmount: number;
 

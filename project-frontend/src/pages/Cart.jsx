@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createOrderFromCart, normalizeApiError } from "../api";
+import { createOrder, getUserById, normalizeApiError } from "../api";
 import { clearCart, getCartItems, getCartTotals, removeFromCart, updateCartQuantity } from "../utils/cart";
+import { useAuth } from "../hooks/useAuth";
+import { getCurrentUserIdFromToken } from "../utils/jwt";
 
 export default function Cart() {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [deliveryType, setDeliveryType] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const sync = () => setItems(getCartItems());
@@ -24,6 +31,32 @@ export default function Cart() {
   }, []);
 
   const { itemCount, totalAmount } = getCartTotals(items);
+  const currentUserId = getCurrentUserIdFromToken(token);
+
+  useEffect(() => {
+    if (!checkoutOpen || deliveryType !== "home_delivery" || !currentUserId || currentUser) return;
+
+    let active = true;
+
+    async function loadUser() {
+      try {
+        const response = await getUserById(currentUserId);
+        if (active) {
+          setCurrentUser(response.data || null);
+        }
+      } catch {
+        if (active) {
+          setCurrentUser(null);
+        }
+      }
+    }
+
+    loadUser();
+
+    return () => {
+      active = false;
+    };
+  }, [checkoutOpen, deliveryType, currentUserId, currentUser]);
 
   const handleQuantityChange = (productId, nextQuantity) => {
     if (nextQuantity < 1) {
@@ -40,21 +73,69 @@ export default function Cart() {
     setItems(getCartItems());
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = () => {
+    setError("");
+
+    if (items.length === 0) {
+      setError("Cart is empty");
+      return;
+    }
+
+    setCheckoutOpen(true);
+  };
+
+  const handleConfirmCheckout = async () => {
+    if (!deliveryType) {
+      setError("Select collect from store or home delivery.");
+      return;
+    }
+
+    if (deliveryType === "home_delivery" && !deliveryAddress.trim()) {
+      setError("Location address is required for home delivery.");
+      return;
+    }
+
+    if (deliveryType === "home_delivery" && !currentUser) {
+      setError("Customer information is still loading. Please try again in a moment.");
+      return;
+    }
+
+    const orderItems = items.map((item) => ({
+      productId: Number(item.product.id),
+      quantity: Number(item.quantity),
+    }));
+
+    if (orderItems.some((item) => !item.productId || item.quantity <= 0)) {
+      setError("Some cart products are invalid. Please remove and add them again.");
+      return;
+    }
+
     try {
       setPlacingOrder(true);
       setError("");
       setSuccess("");
 
-      const response = await createOrderFromCart();
+      const response = await createOrder({
+        items: orderItems,
+        deliveryType,
+        deliveryAddress: deliveryType === "home_delivery" ? deliveryAddress.trim() : "",
+        customerName: deliveryType === "home_delivery" ? currentUser?.fullName || "" : "",
+        customerPhone: deliveryType === "home_delivery" ? currentUser?.phone || "" : "",
+      });
       const order = response.data;
       clearCart();
       setItems([]);
+      setCheckoutOpen(false);
       setSuccess("Order created successfully.");
       navigate("/payment", {
         state: {
           orderId: order?.id,
           amount: Number(order?.totalPrice ?? totalAmount),
+          deliveryType,
+          deliveryAddress: order?.deliveryAddress || deliveryAddress,
+          customerName: order?.customerName || currentUser?.fullName || "",
+          customerPhone: order?.customerPhone || currentUser?.phone || "",
+          customerId: order?.customer?.id || currentUser?.id || currentUserId || "",
         },
       });
     } catch (err) {
@@ -164,6 +245,98 @@ export default function Cart() {
           </button>
         </aside>
       </div>
+
+      {checkoutOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-cyan-950/30">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Checkout</p>
+                <h2 className="mt-2 text-2xl font-black text-white">Choose delivery option</h2>
+                <p className="mt-2 text-sm text-slate-400">Select how you want to receive this order.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckoutOpen(false)}
+                className="rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setDeliveryType("collect_store")}
+                className={`rounded-3xl border p-5 text-left transition ${
+                  deliveryType === "collect_store"
+                    ? "border-cyan-300 bg-cyan-400/15"
+                    : "border-white/10 bg-white/5 hover:border-cyan-400/40"
+                }`}
+              >
+                <h3 className="text-lg font-bold text-white">Collect from store</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Pay now and keep the order booked for store pickup.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDeliveryType("home_delivery")}
+                className={`rounded-3xl border p-5 text-left transition ${
+                  deliveryType === "home_delivery"
+                    ? "border-cyan-300 bg-cyan-400/15"
+                    : "border-white/10 bg-white/5 hover:border-cyan-400/40"
+                }`}
+              >
+                <h3 className="text-lg font-bold text-white">Home Delivery</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Use your account name, phone, and add delivery location.
+                </p>
+              </button>
+            </div>
+
+            {deliveryType === "home_delivery" ? (
+              <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+                  <div>
+                    <p className="text-slate-500">Customer ID</p>
+                    <p className="mt-1 font-semibold text-white">{currentUser?.id || currentUserId || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Name</p>
+                    <p className="mt-1 font-semibold text-white">{currentUser?.fullName || "Loading..."}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Phone</p>
+                    <p className="mt-1 font-semibold text-white">{currentUser?.phone || "N/A"}</p>
+                  </div>
+                </div>
+
+                <label className="mt-4 block text-sm font-medium text-slate-300">
+                  Location Address
+                  <textarea
+                    value={deliveryAddress}
+                    onChange={(event) => setDeliveryAddress(event.target.value)}
+                    rows={3}
+                    placeholder="House, road, area, city"
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+                  />
+                </label>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={handleConfirmCheckout}
+              disabled={placingOrder}
+              className="mt-6 w-full rounded-2xl bg-cyan-400 px-4 py-3.5 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
+            >
+              {placingOrder ? "Creating Order..." : "Continue to Payment"}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

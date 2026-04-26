@@ -3,6 +3,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { User, Role } from './entities/user.entity';
+import { Order } from '../orders/entities/order.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -30,6 +31,12 @@ describe('UsersService', () => {
           provide: getRepositoryToken(User),
           useValue: repo,
         },
+        {
+          provide: getRepositoryToken(Order),
+          useValue: {
+            count: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -40,6 +47,7 @@ describe('UsersService', () => {
     const input = {
       fullName: 'Test User',
       email: 'test@example.com',
+      phone: '01700111222',
       password: 'hashed-password',
       role: Role.CUSTOMER,
     };
@@ -65,6 +73,7 @@ describe('UsersService', () => {
     await expect(
       service.create({
         email: 'test@example.com',
+        phone: '01700111222',
         password: 'hashed-password',
       }),
     ).rejects.toThrow(new ConflictException('Email already exists'));

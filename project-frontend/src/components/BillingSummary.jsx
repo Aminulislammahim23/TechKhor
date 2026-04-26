@@ -129,7 +129,8 @@ export default function BillingSummary({
           >
             <option value="cash">Cash</option>
             <option value="card">Card</option>
-            <option value="mock">Mock</option>
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
           </select>
         </label>
 

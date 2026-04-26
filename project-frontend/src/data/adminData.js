@@ -19,7 +19,7 @@ export const dashboardStats = [
   },
   {
     title: "Total Revenue",
-    value: "$148,920",
+    value: "BDT 148,920",
     change: "+21.8% this month",
     accent: "from-amber-500/20 to-amber-400/10 text-amber-300",
   },
@@ -34,46 +34,46 @@ export const users = [
 ];
 
 export const products = [
-  { id: 1, name: "TechKhor Pro Laptop", price: "$1,299", seller: "Nova Traders", status: "Pending" },
-  { id: 2, name: "Wireless Noise Headset", price: "$199", seller: "SoundLoop", status: "Approved" },
-  { id: 3, name: "Smart Watch X2", price: "$249", seller: "PulseMart", status: "Pending" },
-  { id: 4, name: "Mechanical Keyboard", price: "$129", seller: "KeyForge", status: "Approved" },
-  { id: 5, name: "4K Ultra Monitor", price: "$499", seller: "PixelHub", status: "Pending" },
+  { id: 1, name: "TechKhor Pro Laptop", price: "BDT 129,900", seller: "Nova Traders", status: "Pending" },
+  { id: 2, name: "Wireless Noise Headset", price: "BDT 19,900", seller: "SoundLoop", status: "Approved" },
+  { id: 3, name: "Smart Watch X2", price: "BDT 24,900", seller: "PulseMart", status: "Pending" },
+  { id: 4, name: "Mechanical Keyboard", price: "BDT 12,900", seller: "KeyForge", status: "Approved" },
+  { id: 5, name: "4K Ultra Monitor", price: "BDT 49,900", seller: "PixelHub", status: "Pending" },
 ];
 
 export const orders = [
-  { id: "ORD-20451", user: "Amina Rahman", totalPrice: "$1,498", status: "Delivered" },
-  { id: "ORD-20452", user: "Tanvir Ahmed", totalPrice: "$249", status: "Processing" },
-  { id: "ORD-20453", user: "Raisa Chowdhury", totalPrice: "$2,017", status: "Shipped" },
-  { id: "ORD-20454", user: "Sadia Akter", totalPrice: "$129", status: "Pending" },
+  { id: "ORD-20451", user: "Amina Rahman", totalPrice: "BDT 149,800", status: "Delivered" },
+  { id: "ORD-20452", user: "Tanvir Ahmed", totalPrice: "BDT 24,900", status: "Processing" },
+  { id: "ORD-20453", user: "Raisa Chowdhury", totalPrice: "BDT 201,700", status: "Shipped" },
+  { id: "ORD-20454", user: "Sadia Akter", totalPrice: "BDT 12,900", status: "Pending" },
 ];
 
 export const payments = [
   {
     paymentId: "PAY-88412",
     orderId: "ORD-20451",
-    amount: "$1,498",
+    amount: "BDT 149,800",
     status: "Paid",
     method: "Visa",
   },
   {
     paymentId: "PAY-88413",
     orderId: "ORD-20452",
-    amount: "$249",
+    amount: "BDT 24,900",
     status: "Pending",
     method: "bKash",
   },
   {
     paymentId: "PAY-88414",
     orderId: "ORD-20453",
-    amount: "$2,017",
+    amount: "BDT 201,700",
     status: "Paid",
     method: "Mastercard",
   },
   {
     paymentId: "PAY-88415",
     orderId: "ORD-20454",
-    amount: "$129",
+    amount: "BDT 12,900",
     status: "Failed",
     method: "Nagad",
   },

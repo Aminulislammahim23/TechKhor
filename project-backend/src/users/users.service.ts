@@ -37,6 +37,18 @@ export class UsersService {
       nextData.phone = this.normalizePhone(String(nextData.phone)) || null;
     }
 
+    const role = nextData.role || Role.CUSTOMER;
+    const normalizedPhone = nextData.phone;
+    if (role === Role.CUSTOMER) {
+      if (!normalizedPhone) {
+        throw new BadRequestException('Customer phone is required');
+      }
+
+      if (normalizedPhone.length < 4) {
+        throw new BadRequestException('Customer phone is invalid');
+      }
+    }
+
     const existing = await this.repo.findOne({
       where: { email: nextData.email },
     });

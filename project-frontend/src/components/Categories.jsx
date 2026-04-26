@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getCategories } from "../api/categories.api";
 
 const categoryPresets = {
@@ -126,8 +127,9 @@ export default function Categories() {
       <div className="grid gap-6 md:grid-cols-3">
         {categories.length > 0 ? (
           categories.map((category) => (
-            <article
+            <Link
               key={category.id}
+              to={`/products?category=${encodeURIComponent(category.name)}&categoryId=${encodeURIComponent(category.id)}`}
               className="group rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.07]"
             >
               <div className={`inline-flex rounded-2xl bg-gradient-to-br ${category.tone} p-4 text-white shadow-lg`}>
@@ -139,7 +141,7 @@ export default function Categories() {
               <p className="mt-4 text-sm font-medium text-cyan-300 transition group-hover:text-cyan-200">
                 Shop collection
               </p>
-            </article>
+            </Link>
           ))
         ) : (
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300 md:col-span-3">

@@ -5,7 +5,7 @@ import { createPayment, getPayments, normalizeApiError } from "../api";
 const initialForm = {
   orderId: "",
   amount: "",
-  method: "mock",
+  method: "cash",
 };
 
 function formatDate(value) {
@@ -24,6 +24,7 @@ export default function Payment() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const checkoutInfo = location.state || {};
 
   useEffect(() => {
     const state = location.state || {};
@@ -103,7 +104,7 @@ export default function Payment() {
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Payments</p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Complete payment</h1>
           <p className="mt-4 max-w-2xl text-slate-400">
-            Submit the order amount using the mock payment method and review your payment history below.
+            Select a payment method and complete your order.
           </p>
         </div>
         <Link to="/orders" className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5">
@@ -126,6 +127,25 @@ export default function Payment() {
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <form onSubmit={handleSubmit} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-slate-950/30">
           <h2 className="text-xl font-semibold text-white">Payment form</h2>
+
+          {checkoutInfo.deliveryType ? (
+            <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4 text-sm text-slate-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Order Type</p>
+              <p className="mt-2 font-semibold text-white">
+                {checkoutInfo.deliveryType === "home_delivery" ? "Home Delivery" : "Collect from store"}
+              </p>
+              {checkoutInfo.deliveryType === "home_delivery" ? (
+                <div className="mt-3 space-y-1 text-slate-300">
+                  <p>Customer ID: {checkoutInfo.customerId || "N/A"}</p>
+                  <p>Name: {checkoutInfo.customerName || "N/A"}</p>
+                  <p>Phone: {checkoutInfo.customerPhone || "N/A"}</p>
+                  <p>Address: {checkoutInfo.deliveryAddress || "N/A"}</p>
+                </div>
+              ) : (
+                <p className="mt-3 text-slate-300">Pay now to book this order for store pickup.</p>
+              )}
+            </div>
+          ) : null}
 
           <div className="mt-6 space-y-5">
             <div>
@@ -168,7 +188,10 @@ export default function Payment() {
                 onChange={handleChange}
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
               >
-                <option value="mock">Mock</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="bkash">bKash</option>
+                <option value="nagad">Nagad</option>
               </select>
             </div>
           </div>

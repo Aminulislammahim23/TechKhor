@@ -82,6 +82,8 @@ api.interceptors.response.use(
 export const register = (payload) => api.post("/auth/register", payload);
 export const login = (payload) => api.post("/auth/login", payload);
 export const lookupCustomerByPhone = (phone) => api.get("/users/customers/lookup", { params: { phone } });
+export const getUserById = (id) => api.get(`/users/${id}`);
+export const updateUserById = (id, payload) => api.patch(`/users/${id}`, payload);
 export const getProducts = (params) => api.get("/products", { params });
 export const getSellerPosProducts = (params) => api.get("/products/seller/pos-search", { params });
 export const createProduct = (payload) => api.post("/products", payload);

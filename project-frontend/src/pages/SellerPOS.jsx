@@ -36,6 +36,8 @@ export default function SellerPOS() {
   const [toast, setToast] = useState("");
   const debounceRef = useRef(null);
   const phoneLookupRef = useRef(null);
+  const autoFilledCustomerRef = useRef(false);
+  const autoFilledPhoneRef = useRef("");
 
   useEffect(() => {
     if (debounceRef.current) {
@@ -65,6 +67,7 @@ export default function SellerPOS() {
   }, [query]);
 
   useEffect(() => {
+    let active = true;
     const normalizedPhone = customerPhone.replace(/[^\d+]/g, "").trim();
 
     if (phoneLookupRef.current) {
@@ -74,6 +77,11 @@ export default function SellerPOS() {
     if (normalizedPhone.length < 4) {
       setCustomerLookup(null);
       setCustomerLookupLoading(false);
+      if (autoFilledCustomerRef.current) {
+        setCustomerName("");
+        autoFilledCustomerRef.current = false;
+        autoFilledPhoneRef.current = "";
+      }
       return;
     }
 
@@ -83,24 +91,33 @@ export default function SellerPOS() {
         const response = await lookupCustomerByPhone(normalizedPhone);
         const data = response.data || null;
 
+        if (!active) return;
+
         setCustomerLookup(data);
 
-        if (data?.found && data?.customer?.fullName && !customerName.trim()) {
+        if (data?.found && data?.customer?.fullName) {
           setCustomerName(data.customer.fullName);
+          autoFilledCustomerRef.current = true;
+          autoFilledPhoneRef.current = normalizedPhone;
         }
       } catch {
-        setCustomerLookup(null);
+        if (active) {
+          setCustomerLookup(null);
+        }
       } finally {
-        setCustomerLookupLoading(false);
+        if (active) {
+          setCustomerLookupLoading(false);
+        }
       }
     }, 350);
 
     return () => {
+      active = false;
       if (phoneLookupRef.current) {
         window.clearTimeout(phoneLookupRef.current);
       }
     };
-  }, [customerPhone, customerName]);
+  }, [customerPhone]);
 
   const subtotal = useMemo(
     () =>
@@ -169,11 +186,25 @@ export default function SellerPOS() {
   };
 
   const handleCustomerNameChange = (value) => {
+    autoFilledCustomerRef.current = false;
     setCustomerName(value);
     setCreatedOrder(null);
   };
 
   const handleCustomerPhoneChange = (value) => {
+    const previousPhone = customerPhone.replace(/[^\d+]/g, "").trim();
+    const nextPhone = value.replace(/[^\d+]/g, "").trim();
+
+    if (
+      nextPhone.length < previousPhone.length ||
+      (autoFilledCustomerRef.current && nextPhone !== autoFilledPhoneRef.current)
+    ) {
+      setCustomerName("");
+      setCustomerLookup(null);
+      autoFilledCustomerRef.current = false;
+      autoFilledPhoneRef.current = "";
+    }
+
     setCustomerPhone(value);
     setCreatedOrder(null);
   };
@@ -252,6 +283,8 @@ export default function SellerPOS() {
       setCustomerName("");
       setCustomerPhone("");
       setCustomerLookup(null);
+      autoFilledCustomerRef.current = false;
+      autoFilledPhoneRef.current = "";
       setTaxRate("5");
     } catch (err) {
       setError(normalizeApiError(err));

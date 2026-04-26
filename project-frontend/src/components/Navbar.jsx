@@ -13,11 +13,18 @@ const publicLinks = [
 const authenticatedLinks = [
   { label: "Orders", to: "/orders" },
   { label: "Cart", to: "/cart" },
-  { label: "Payment", to: "/payment" },
 ];
 
 function navClass({ isActive }) {
   return `text-sm font-medium transition ${isActive ? "text-white" : "text-slate-300 hover:text-white"}`;
+}
+
+function customerHubClass({ isActive }) {
+  return `rounded-full border px-4 py-2 text-sm font-semibold transition ${
+    isActive
+      ? "border-cyan-300 bg-cyan-300 text-slate-950"
+      : "border-cyan-400/40 bg-cyan-400/10 text-cyan-100 hover:border-cyan-300/70 hover:bg-cyan-400/20"
+  }`;
 }
 
 export default function Navbar() {
@@ -60,6 +67,11 @@ export default function Navbar() {
                 </NavLink>
               ))
             : null}
+          {!isAdmin && !isSeller && isAuthenticated ? (
+            <NavLink to="/dashboard" className={customerHubClass}>
+              Customer Hub
+            </NavLink>
+          ) : null}
           {isAdmin ? (
             <NavLink to="/admin" className={navClass}>
               Admin
@@ -138,6 +150,17 @@ export default function Navbar() {
                   </NavLink>
                 ))
               : null}
+            {!isAdmin && !isSeller && isAuthenticated ? (
+              <div className="border-t border-white/10 pt-4">
+                <NavLink
+                  to="/dashboard"
+                  className="block rounded-2xl border border-cyan-400/40 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-400/20"
+                  onClick={() => setOpen(false)}
+                >
+                  Customer Hub
+                </NavLink>
+              </div>
+            ) : null}
             {isAdmin ? (
               <NavLink
                 to="/admin"

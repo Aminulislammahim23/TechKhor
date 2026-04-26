@@ -15,4 +15,12 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   customerPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryType?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryAddress?: string;
 }

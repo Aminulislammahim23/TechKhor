@@ -62,6 +62,7 @@ describe('AuthService', () => {
     const dto = {
       fullName: 'Test User',
       email: 'test@example.com',
+      phone: '01700111222',
       password: 'plain-password',
     };
     const savedUser = {

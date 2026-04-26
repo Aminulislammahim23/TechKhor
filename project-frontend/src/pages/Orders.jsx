@@ -4,13 +4,11 @@ import { getAdminOrders, normalizeApiError } from "../api";
 
 function formatAmount(value) {
   const numeric = Number(value);
-  if (Number.isNaN(numeric)) return "$0";
+  if (Number.isNaN(numeric)) return "BDT 0";
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return `BDT ${new Intl.NumberFormat("en-BD", {
     maximumFractionDigits: 0,
-  }).format(numeric);
+  }).format(numeric)}`;
 }
 
 function mapStatus(status) {

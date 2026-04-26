@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 const initialState = {
   fullName: "",
   email: "",
+  phone: "",
   password: "",
 };
 
@@ -34,6 +35,10 @@ export default function Register() {
 
     if (!form.fullName.trim()) nextErrors.fullName = "Full name is required.";
     if (!form.email.trim()) nextErrors.email = "Email is required.";
+    if (!form.phone.trim()) nextErrors.phone = "Phone number is required for customer accounts.";
+    if (form.phone.trim() && form.phone.replace(/[^\d+]/g, "").trim().length < 4) {
+      nextErrors.phone = "Enter a valid phone number.";
+    }
     if (!form.password.trim()) nextErrors.password = "Password is required.";
 
     setErrors(nextErrors);
@@ -51,6 +56,7 @@ export default function Register() {
       await register({
         fullName: form.fullName.trim(),
         email: form.email.trim(),
+        phone: form.phone.replace(/[^\d+]/g, "").trim(),
         password: form.password,
       });
 
@@ -103,6 +109,22 @@ export default function Register() {
               placeholder="Enter your email"
             />
             {errors.email ? <p className="mt-2 text-sm text-rose-400">{errors.email}</p> : null}
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="mb-2 block text-sm font-medium text-slate-300">
+              Phone Number
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+              placeholder="Enter your phone number"
+            />
+            {errors.phone ? <p className="mt-2 text-sm text-rose-400">{errors.phone}</p> : null}
           </div>
 
           <div>

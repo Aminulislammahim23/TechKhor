@@ -22,6 +22,8 @@ export class OrdersController {
       return this.service.createFromItems(req.user, body.items, {
         customerName: body.customerName,
         customerPhone: body.customerPhone,
+        deliveryType: body.deliveryType,
+        deliveryAddress: body.deliveryAddress,
       });
     }
 

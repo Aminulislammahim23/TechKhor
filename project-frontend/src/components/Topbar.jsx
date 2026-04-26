@@ -11,27 +11,44 @@ const titles = {
   "/admin/payments": { title: "Payments", subtitle: "Follow payment flow across every transaction" },
   "/admin/seller-earnings": { title: "Seller Earnings", subtitle: "Review seller sales, commissions, and payouts" },
   "/admin/settings": { title: "Settings", subtitle: "Manage admin profile and server maintenance mode" },
+  "/dashboard": { title: "Dashboard", subtitle: "Your orders, payments, and account activity in one place" },
+  "/orders": { title: "My Orders", subtitle: "Track recent purchases and fulfillment status" },
+  "/payments": { title: "My Payments", subtitle: "Review transactions and payment methods" },
+  "/profile": { title: "Profile", subtitle: "Manage your customer information and password" },
 };
 
-export default function Topbar({ onMenuClick }) {
+export default function Topbar({ onMenuClick, variant = "admin" }) {
   const { pathname } = useLocation();
-  const current = titles[pathname] || titles["/admin"];
+  const isCustomer = variant === "customer";
+  const current = titles[pathname] || (isCustomer ? titles["/dashboard"] : titles["/admin"]);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+    <header
+      className={`sticky top-0 z-20 border-b backdrop-blur-xl ${
+        isCustomer ? "border-slate-200 bg-white/90" : "border-white/10 bg-slate-950/80"
+      }`}
+    >
       <div className="flex items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={onMenuClick}
-          className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-300 transition hover:border-cyan-400/30 hover:text-white lg:hidden"
+          className={`rounded-2xl border px-4 py-3 text-sm transition lg:hidden ${
+            isCustomer
+              ? "border-slate-200 text-slate-700 hover:border-cyan-300 hover:text-slate-950"
+              : "border-white/10 text-slate-300 hover:border-cyan-400/30 hover:text-white"
+          }`}
         >
           Menu
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium uppercase tracking-[0.24em] text-cyan-400">TechKhor Admin</p>
-          <h2 className="mt-1 truncate text-2xl font-semibold text-white">{current.title}</h2>
-          <p className="mt-1 text-sm text-slate-400">{current.subtitle}</p>
+          <p className="text-sm font-medium uppercase tracking-[0.24em] text-cyan-500">
+            {isCustomer ? "TechKhor Customer" : "TechKhor Admin"}
+          </p>
+          <h2 className={`mt-1 truncate text-2xl font-semibold ${isCustomer ? "text-slate-950" : "text-white"}`}>
+            {current.title}
+          </h2>
+          <p className={`mt-1 text-sm ${isCustomer ? "text-slate-500" : "text-slate-400"}`}>{current.subtitle}</p>
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -40,13 +57,26 @@ export default function Topbar({ onMenuClick }) {
             <input
               type="search"
               placeholder="Search..."
-              className="w-72 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+              className={`w-72 rounded-2xl border px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-cyan-400/40 ${
+                isCustomer
+                  ? "border-slate-200 bg-slate-50 text-slate-900"
+                  : "border-white/10 bg-white/5 text-white"
+              }`}
             />
           </label>
-          <button type="button" className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-cyan-400/10">
+          <button
+            type="button"
+            className={`rounded-2xl border px-4 py-3 text-sm transition hover:border-cyan-400/30 hover:bg-cyan-400/10 ${
+              isCustomer ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-white/5 text-slate-200"
+            }`}
+          >
             Notifications
           </button>
-          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg shadow-cyan-500/20">
+          <div
+            className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border shadow-lg shadow-cyan-500/20 ${
+              isCustomer ? "border-slate-200 bg-white" : "border-white/10 bg-slate-900/80"
+            }`}
+          >
             <img
               src="/main-logo.jpeg"
               alt="TechKhor logo"

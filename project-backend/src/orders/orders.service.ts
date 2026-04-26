@@ -15,6 +15,8 @@ import { UsersService } from '../users/users.service';
 type OrderCustomerInfo = {
   customerName?: string;
   customerPhone?: string;
+  deliveryType?: string;
+  deliveryAddress?: string;
 };
 
 @Injectable()
@@ -79,6 +81,8 @@ export class OrdersService {
     const isSellerOrder = user.role === 'seller';
     const customerName = String(customerInfo.customerName || '').trim();
     const customerPhone = String(customerInfo.customerPhone || '').trim();
+    const deliveryType = String(customerInfo.deliveryType || '').trim() || null;
+    const deliveryAddress = String(customerInfo.deliveryAddress || '').trim() || null;
     let posCustomer: Awaited<ReturnType<UsersService['findOrCreatePosCustomer']>> | null = null;
 
     if (isSellerOrder && !customerName) {
@@ -148,15 +152,23 @@ export class OrdersService {
 
     const total = this.roundMoney(totalAfterDiscount);
     const customerDiscountAmount = this.roundMoney(totalBeforeDiscount - totalAfterDiscount);
+    const registeredCustomer = !isSellerOrder ? await this.usersService.findById(userId) : null;
 
     const order = this.orderRepo.create({
       user: { id: userId },
-      customer: posCustomer ? { id: posCustomer.customer.id } : null,
+      customer: posCustomer
+        ? { id: posCustomer.customer.id }
+        : registeredCustomer
+          ? { id: registeredCustomer.id }
+          : null,
       items: orderItems,
       totalPrice: total,
       status: 'pending',
-      customerName: customerName || posCustomer?.customer.fullName || null,
-      customerPhone: this.usersService.normalizePhone(customerPhone) || null,
+      customerName: customerName || posCustomer?.customer.fullName || registeredCustomer?.fullName || null,
+      customerPhone:
+        this.usersService.normalizePhone(customerPhone) || registeredCustomer?.phone || null,
+      deliveryType,
+      deliveryAddress,
       customerDiscountAmount,
       customerDiscountRate: discountRate,
     });

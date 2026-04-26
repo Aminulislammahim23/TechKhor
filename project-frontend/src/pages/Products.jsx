@@ -5,13 +5,11 @@ import { approveProduct as approveProductApi, getProducts } from "../api/product
 
 function formatPrice(value) {
   const number = Number(value);
-  if (Number.isNaN(number)) return "$0";
+  if (Number.isNaN(number)) return "BDT 0";
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return `BDT ${new Intl.NumberFormat("en-BD", {
     maximumFractionDigits: 0,
-  }).format(number);
+  }).format(number)}`;
 }
 
 function unwrapProducts(responseData) {

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as XLSX from 'xlsx';
 import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
@@ -29,17 +29,42 @@ export class ProductsService {
   ) {}
 
   async findAll(query: any) {
-    const { page = 1, limit = 10, search = '' } = query;
+    const { page = 1, limit = 10, search = '', categoryId, categoryName, approvedOnly } = query;
+    const normalizedSearch = String(search || '').trim();
+    const take = Math.min(Math.max(Number(limit) || 10, 1), 100);
+    const skip = (Number(page) - 1) * take;
 
-    const [data, total] = await this.repo.findAndCount({
-      where: [
-        { name: Like(`%${search}%`) },
-        { description: Like(`%${search}%`) },
-      ],
-      relations: ['seller', 'category'],
-      take: Number(limit),
-      skip: (Number(page) - 1) * Number(limit),
-    });
+    const builder = this.repo
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.seller', 'seller')
+      .leftJoinAndSelect('product.category', 'category');
+
+    if (normalizedSearch) {
+      builder.andWhere(
+        '(product.name ILIKE :search OR product.description ILIKE :search OR product.tags ILIKE :search)',
+        { search: `%${normalizedSearch}%` },
+      );
+    }
+
+    if (categoryId) {
+      builder.andWhere('category.id = :categoryId', { categoryId: Number(categoryId) });
+    }
+
+    if (categoryName) {
+      builder.andWhere('LOWER(category.name) = LOWER(:categoryName)', {
+        categoryName: String(categoryName).trim(),
+      });
+    }
+
+    if (String(approvedOnly) === 'true') {
+      builder.andWhere('product.isApproved = true');
+    }
+
+    const [data, total] = await builder
+      .orderBy('product.name', 'ASC')
+      .take(take)
+      .skip(skip)
+      .getManyAndCount();
 
     return {
       total,
