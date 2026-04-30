@@ -1,48 +1,7 @@
-import { useEffect, useState } from "react";
-import { getMyOrders, normalizeApiError } from "../api";
-
-function formatDate(value) {
-  if (!value) return "Just now";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
+import { formatOrderDate, useOrders } from "../hooks/useOrders";
 
 export default function MyOrders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadOrders() {
-      try {
-        setLoading(true);
-        setError("");
-        const response = await getMyOrders();
-        if (active) {
-          setOrders(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch (err) {
-        if (active) {
-          setError(normalizeApiError(err));
-          setOrders([]);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadOrders();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { orders, loading, error } = useOrders();
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -80,7 +39,7 @@ export default function MyOrders() {
                 <h2 className="mt-1 text-xl font-semibold text-white">
                   BDT {Number(order.totalPrice).toLocaleString("en-BD")}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">Placed on {formatDate(order.createdAt)}</p>
+                <p className="mt-1 text-sm text-slate-400">Placed on {formatOrderDate(order.createdAt)}</p>
               </div>
 
               <div className="flex items-center gap-3">
