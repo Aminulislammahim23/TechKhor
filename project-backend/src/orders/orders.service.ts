@@ -220,6 +220,25 @@ export class OrdersService {
     return order;
   }
 
+  async findOneForUser(id: number, user: { id: number; role?: string }) {
+    const order = await this.findOne(id);
+
+    if (user.role === 'admin') {
+      return order;
+    }
+
+    const userId = Number(user.id);
+    const ownsOrder =
+      Number(order.user?.id) === userId ||
+      Number(order.customer?.id) === userId;
+
+    if (!ownsOrder) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return order;
+  }
+
   // 🔥 Payment Integration
   async markAsPaid(orderId: number) {
     const order = await this.findOne(orderId);

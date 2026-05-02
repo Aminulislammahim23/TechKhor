@@ -32,12 +32,17 @@ export default function StoreProducts({ bestDealsOnly = false }) {
   const [searchParams] = useSearchParams();
   const selectedCategory = searchParams.get("category") || "";
   const selectedCategoryId = searchParams.get("categoryId") || "";
+  const selectedSearch = searchParams.get("search") || "";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(selectedSearch);
   const successTimerRef = useRef(null);
+
+  useEffect(() => {
+    setSearchTerm(selectedSearch);
+  }, [selectedSearch]);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +53,7 @@ export default function StoreProducts({ bestDealsOnly = false }) {
         setError("");
         const response = await getProducts({
           limit: 100,
+          search: selectedSearch.trim(),
           category: selectedCategory,
           categoryId: selectedCategoryId,
           approvedOnly: bestDealsOnly ? true : undefined,
@@ -82,7 +88,7 @@ export default function StoreProducts({ bestDealsOnly = false }) {
     return () => {
       active = false;
     };
-  }, [bestDealsOnly, selectedCategory, selectedCategoryId]);
+  }, [bestDealsOnly, selectedCategory, selectedCategoryId, selectedSearch]);
 
   useEffect(() => () => {
     if (successTimerRef.current) {
