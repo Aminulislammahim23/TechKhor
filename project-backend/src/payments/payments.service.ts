@@ -9,6 +9,7 @@ import { OrdersService } from '../orders/orders.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './entities/payment.entity';
 import { EarningsService } from '../earnings/earnings.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PaymentsService {
@@ -17,9 +18,11 @@ export class PaymentsService {
     private paymentRepo: Repository<Payment>,
     private ordersService: OrdersService,
     private earningsService: EarningsService,
+    private notificationsService: NotificationsService,
   ) {}
 
-  async create(userId: number, dto: CreatePaymentDto) {
+  async create(user: { id: number; role?: string }, dto: CreatePaymentDto) {
+    const userId = Number(user.id);
     // 1. Prevent duplicate payment for same order
     const existing = await this.paymentRepo.findOne({
       where: { order: { id: dto.orderId } },
@@ -27,6 +30,15 @@ export class PaymentsService {
 
     if (existing && existing.status === 'success') {
       throw new BadRequestException('Payment already completed for this order');
+    }
+
+    if (existing && existing.status === 'pending') {
+      const pendingOrder = await this.ordersService.findOne(dto.orderId);
+      await this.notificationsService.createPaymentApprovalNotifications(
+        pendingOrder,
+        existing.id,
+      );
+      return existing;
     }
 
     // 2. Validate order exists using OrdersService
@@ -42,8 +54,11 @@ export class PaymentsService {
       transactionId: null,
     });
 
-    // 4. For POS-friendly methods, process immediately
-    if (['mock', 'cash', 'card'].includes(String(dto.method).toLowerCase())) {
+    // 4. Seller POS-friendly methods process immediately. Customer online purchases wait for seller approval.
+    if (
+      user.role === 'seller' &&
+      ['mock', 'cash', 'card'].includes(String(dto.method).toLowerCase())
+    ) {
       payment.status = 'success';
       payment.transactionId = `TXN-${String(dto.method || 'mock').toUpperCase()}-${Date.now()}`;
 
@@ -53,11 +68,57 @@ export class PaymentsService {
     const savedPayment = await this.paymentRepo.save(payment);
 
     if (savedPayment.status === 'success') {
-      await this.earningsService.generateForSuccessfulPayment(
+      await this.finalizeSuccessfulPayment(savedPayment);
+    } else {
+      const pendingOrder = await this.ordersService.findOne(dto.orderId);
+      await this.notificationsService.createPaymentApprovalNotifications(
+        pendingOrder,
         savedPayment.id,
-        dto.orderId,
       );
     }
+
+    return savedPayment;
+  }
+
+  async approvePayment(
+    paymentId: number,
+    user: { id: number; role?: string },
+  ) {
+    const payment = await this.paymentRepo.findOne({
+      where: { id: paymentId },
+      relations: [
+        'order',
+        'order.items',
+        'order.items.product',
+        'order.items.product.seller',
+      ],
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    if (payment.status === 'success') {
+      return payment;
+    }
+
+    const canApprove =
+      user.role === 'admin' ||
+      payment.order?.items?.some(
+        (item) => Number(item.product?.seller?.id) === Number(user.id),
+      );
+
+    if (!canApprove) {
+      throw new BadRequestException('You cannot approve this payment');
+    }
+
+    payment.status = 'success';
+    payment.transactionId =
+      payment.transactionId || `TXN-SELLER-APPROVED-${Date.now()}`;
+
+    await this.ordersService.markAsPaid(payment.order.id);
+    const savedPayment = await this.paymentRepo.save(payment);
+    await this.finalizeSuccessfulPayment(savedPayment);
 
     return savedPayment;
   }
@@ -76,6 +137,60 @@ export class PaymentsService {
     });
   }
 
+  async findPendingApprovalsForSeller(sellerId: number) {
+    const pendingPayments = await this.paymentRepo.find({
+      where: { status: 'pending' },
+      relations: [
+        'user',
+        'order',
+        'order.customer',
+        'order.items',
+        'order.items.product',
+        'order.items.product.seller',
+      ],
+      order: { createdAt: 'DESC' },
+    });
+
+    return pendingPayments
+      .map((payment) => {
+        const sellerItems = (payment.order?.items || []).filter(
+          (item) => Number(item.product?.seller?.id) === Number(sellerId),
+        );
+
+        if (sellerItems.length === 0) {
+          return null;
+        }
+
+        return {
+          id: payment.id,
+          paymentId: payment.id,
+          orderId: payment.order?.id,
+          amount: Number(payment.amount),
+          method: payment.method,
+          status: payment.status,
+          customerName:
+            payment.order?.customerName ||
+            payment.order?.customer?.fullName ||
+            payment.user?.fullName ||
+            null,
+          customerPhone:
+            payment.order?.customerPhone ||
+            payment.order?.customer?.phone ||
+            payment.user?.phone ||
+            null,
+          deliveryType: payment.order?.deliveryType,
+          deliveryAddress: payment.order?.deliveryAddress,
+          createdAt: payment.createdAt,
+          items: sellerItems.map((item) => ({
+            name: item.product?.name || 'Product',
+            quantity: Number(item.quantity),
+            price: Number(item.price),
+          })),
+        };
+      })
+      .filter(Boolean);
+  }
+
   async findOne(id: number) {
     const payment = await this.paymentRepo.findOne({
       where: { id },
@@ -87,5 +202,14 @@ export class PaymentsService {
     }
 
     return payment;
+  }
+
+  private async finalizeSuccessfulPayment(payment: Payment) {
+    await this.earningsService.generateForSuccessfulPayment(
+      payment.id,
+      payment.order?.id,
+    );
+    const paidOrder = await this.ordersService.findOne(payment.order?.id);
+    await this.notificationsService.createPurchaseThankYou(paidOrder);
   }
 }

@@ -24,6 +24,7 @@ export default function Payment() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [purchaseNotification, setPurchaseNotification] = useState(null);
   const checkoutInfo = location.state || {};
 
   useEffect(() => {
@@ -87,7 +88,25 @@ export default function Payment() {
         method: form.method,
       });
 
-      setSuccess(`Payment ${response.data?.status || "completed"} successfully.`);
+      const paymentStatus = response.data?.status || "completed";
+      const notification = {
+        orderId: form.orderId,
+        amount: Number(form.amount),
+        method: form.method,
+        status: paymentStatus,
+        deliveryType: checkoutInfo.deliveryType,
+        deliveryAddress: checkoutInfo.deliveryAddress,
+        customerName: checkoutInfo.customerName,
+        customerPhone: checkoutInfo.customerPhone,
+        items: Array.isArray(checkoutInfo.items) ? checkoutInfo.items : [],
+      };
+      setSuccess(
+        paymentStatus === "pending"
+          ? "Payment request submitted. Waiting for seller approval."
+          : `Payment ${paymentStatus} successfully.`
+      );
+      setPurchaseNotification(notification);
+      window.dispatchEvent(new Event("notificationschange"));
       const refreshed = await getPayments();
       setPayments(Array.isArray(refreshed.data) ? refreshed.data : []);
     } catch (err) {
@@ -121,6 +140,62 @@ export default function Payment() {
       {success ? (
         <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
           {success}
+        </div>
+      ) : null}
+
+      {purchaseNotification ? (
+        <div className="mb-6 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-5 text-slate-200 shadow-xl shadow-slate-950/30">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            {purchaseNotification.status === "pending" ? "Approval requested" : "Notification sent"}
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            {purchaseNotification.status === "pending"
+              ? "Your payment is pending seller approval."
+              : "Thank you for your purchase."}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            {purchaseNotification.status === "pending"
+              ? `The seller received an approval request for Order #${purchaseNotification.orderId}.`
+              : `Your confirmation notification includes Order #${purchaseNotification.orderId}.`}{" "}
+            Payment method {purchaseNotification.method}, total BDT{" "}
+            {Number(purchaseNotification.amount).toLocaleString("en-BD")}.
+          </p>
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+              <p className="text-slate-500">Order ID</p>
+              <p className="mt-1 font-semibold text-white">#{purchaseNotification.orderId}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+              <p className="text-slate-500">Amount</p>
+              <p className="mt-1 font-semibold text-white">
+                BDT {Number(purchaseNotification.amount).toLocaleString("en-BD")}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+              <p className="text-slate-500">Delivery</p>
+              <p className="mt-1 font-semibold text-white">
+                {purchaseNotification.deliveryType === "home_delivery" ? "Home Delivery" : "Collect from store"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+              <p className="text-slate-500">Customer</p>
+              <p className="mt-1 font-semibold text-white">{purchaseNotification.customerName || "N/A"}</p>
+            </div>
+          </div>
+          {purchaseNotification.deliveryAddress ? (
+            <p className="mt-3 text-sm text-slate-300">Address: {purchaseNotification.deliveryAddress}</p>
+          ) : null}
+          {purchaseNotification.items.length > 0 ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {purchaseNotification.items.map((item) => (
+                <div key={`${item.name}-${item.quantity}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-sm">
+                  <p className="font-semibold text-white">{item.name}</p>
+                  <p className="mt-1 text-slate-400">Quantity: {item.quantity}</p>
+                  <p className="mt-1 text-slate-400">Price: BDT {Number(item.price).toLocaleString("en-BD")}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

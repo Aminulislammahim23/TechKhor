@@ -30,6 +30,7 @@ import Sellers from "./pages/Sellers";
 import Settings from "./pages/Settings";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProducts from "./pages/SellerProducts";
+import SellerOfferProduct from "./pages/SellerOfferProduct";
 import SellerEarnings from "./pages/SellerEarnings";
 import AddProduct from "./pages/AddProduct";
 import SellerPOS from "./pages/SellerPOS";
@@ -207,7 +208,7 @@ function AppFrame() {
           }
         />
         <Route path="/products" element={<StoreProducts />} />
-        <Route path="/best-deals" element={<Navigate to="/products" replace />} />
+        <Route path="/best-deals" element={<StoreProducts bestDealsOnly />} />
         <Route path="/pc-builder" element={<PCBuilder />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route
@@ -283,6 +284,7 @@ function AppFrame() {
             <Route index element={<SellerDashboard />} />
             <Route path="products" element={<SellerProducts />} />
             <Route path="add-product" element={<AddProduct />} />
+            <Route path="offer-product" element={<SellerOfferProduct />} />
             <Route path="bulk-upload" element={<Navigate to="/seller/add-product" replace />} />
             <Route path="pos" element={<SellerPOS />} />
             <Route path="earnings" element={<SellerEarnings />} />

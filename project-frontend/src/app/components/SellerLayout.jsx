@@ -2,11 +2,13 @@ import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import SellerSidebar from "./SellerSidebar";
+import NotificationBell from "./NotificationBell";
 
 const titles = {
   "/seller": { title: "Dashboard", subtitle: "Track your products and order activity" },
   "/seller/products": { title: "My Products", subtitle: "Review submitted products and approval status" },
   "/seller/add-product": { title: "Add Product", subtitle: "Create products manually or import them from Excel" },
+  "/seller/offer-product": { title: "Offer Product", subtitle: "Choose products and set special offer prices" },
   "/seller/pos": { title: "Seller POS", subtitle: "Create bills, process payments, and print receipt" },
   "/seller/earnings": { title: "Earnings", subtitle: "Track sales, commission, and payout status" },
 };
@@ -36,6 +38,8 @@ export default function SellerLayout() {
               <h2 className="mt-1 truncate text-2xl font-semibold text-white">{current.title}</h2>
               <p className="mt-1 text-sm text-slate-400">{current.subtitle}</p>
             </div>
+
+            <NotificationBell orderLink="/seller/earnings" actionLabel="View sales" includePaymentApprovals />
           </div>
         </header>
 

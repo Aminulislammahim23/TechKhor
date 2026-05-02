@@ -7,3 +7,4 @@ export * from "./userService";
 export * from "./paymentService";
 export * from "./settingsService";
 export * from "./earningsService";
+export * from "./notificationsService";

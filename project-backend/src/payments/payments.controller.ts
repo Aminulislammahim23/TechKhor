@@ -22,7 +22,7 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreatePaymentDto, @Req() req) {
-    return this.service.create(req.user.id, dto);
+    return this.service.create(req.user, dto);
   }
 
   // 👉 My Payments
@@ -40,6 +40,20 @@ export class PaymentsController {
   }
 
   // 👉 Single Payment
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('seller')
+  @Get('seller/pending-approvals')
+  findPendingApprovalsForSeller(@Req() req) {
+    return this.service.findPendingApprovalsForSeller(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('seller', 'admin')
+  @Post(':id/approve')
+  approve(@Param('id', ParseIntPipe) id: number, @Req() req) {
+    return this.service.approvePayment(id, req.user);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {

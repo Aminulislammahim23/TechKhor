@@ -1,11 +1,24 @@
+import { useMemo, useState } from "react";
 import Table, { StatusPill } from "../components/Table";
 import { useAdminProducts } from "../hooks/useProducts";
 
 export default function Products() {
-  const { rows, pendingCount, loading, error, approvingId, approveProduct } = useAdminProducts();
+  const [searchTerm, setSearchTerm] = useState("");
+  const params = useMemo(
+    () => ({
+      limit: 200,
+      search: searchTerm.trim(),
+    }),
+    [searchTerm]
+  );
+  const { rows, pendingCount, loading, error, approvingId, approveProduct } = useAdminProducts({
+    params,
+  });
 
   const columns = [
+    { key: "productId", label: "Product ID" },
     { key: "name", label: "Name" },
+    { key: "category", label: "Category" },
     { key: "price", label: "Price" },
     { key: "seller", label: "Seller" },
     {
@@ -41,6 +54,16 @@ export default function Products() {
             {pendingCount} pending
           </span>
         </div>
+        <label className="mt-6 block max-w-2xl">
+          <span className="sr-only">Search products</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by product ID, name, or category..."
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+          />
+        </label>
       </div>
 
       {error ? (
@@ -55,7 +78,17 @@ export default function Products() {
         </div>
       ) : null}
 
-      <Table columns={columns} data={rows} rowKey="id" />
+      <Table
+        columns={columns}
+        data={rows}
+        rowKey="id"
+        emptyTitle={searchTerm.trim() ? "No matching products found" : "No products found"}
+        emptyDescription={
+          searchTerm.trim()
+            ? "Try another product ID, name, or category."
+            : "There are no product submissions to show yet."
+        }
+      />
     </section>
   );
 }

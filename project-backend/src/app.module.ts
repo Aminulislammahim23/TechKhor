@@ -14,6 +14,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminAnalyticsModule } from './admin-analytics/admin-analytics.module';
 import { EarningsModule } from './earnings/earnings.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 loadEnv({ path: resolve(__dirname, '..', '.env') });
 
@@ -41,6 +42,7 @@ loadEnv({ path: resolve(__dirname, '..', '.env') });
     OrdersModule,
     PaymentsModule,
     EarningsModule,
+    NotificationsModule,
     AdminAnalyticsModule,
   ],
   controllers: [AppController],
