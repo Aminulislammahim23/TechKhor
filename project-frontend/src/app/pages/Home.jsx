@@ -5,6 +5,8 @@ import WhyChooseUs from "../components/WhyChooseUs";
 import Testimonials from "../components/Testimonials";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
+import NewTrends from "../components/NewTrends";
+import FloatingWhatsApp from "../components/FloatingWhatsApp";
 import { useProducts, unwrapProducts } from "../hooks/useProducts";
 
 function selectFeaturedProducts(responseData) {
@@ -13,11 +15,29 @@ function selectFeaturedProducts(responseData) {
 
 export default function Home() {
   const { products: featuredProducts } = useProducts({ select: selectFeaturedProducts });
+  const { products: newTrends } = useProducts({
+    params: { approvedOnly: true, limit: 12 },
+    select: (responseData) =>
+      unwrapProducts(responseData)
+        .slice()
+        .sort((first, second) => new Date(second.createdAt || 0) - new Date(first.createdAt || 0))
+        .slice(0, 10),
+  });
+  const { products: bestDeals } = useProducts({
+    params: { offerOnly: true, approvedOnly: true, limit: 4 },
+    select: selectFeaturedProducts,
+  });
 
   return (
     <div className="min-h-screen bg-slate-950">
       <main>
         <Hero />
+        <Products
+          products={bestDeals}
+          title="Best Deals"
+          subtitle="Limited-time offer products selected by TechKhor sellers."
+        />
+        <NewTrends products={newTrends} />
         <Products products={featuredProducts} />
         <Categories />
         <WhyChooseUs />
@@ -25,6 +45,7 @@ export default function Home() {
         <Newsletter />
       </main>
       <Footer />
+      <FloatingWhatsApp />
     </div>
   );
 }

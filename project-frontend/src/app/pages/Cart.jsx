@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createOrder, getUserById, normalizeApiError } from "../api";
-import { clearCart, getCartItems, getCartTotals, removeFromCart, updateCartQuantity } from "../utils/cart";
+import { clearCart, getCartItems, getCartTotals, getProductPrice, removeFromCart, updateCartQuantity } from "../utils/cart";
 import { useAuth } from "../hooks/useAuth";
 import { getCurrentUserIdFromToken } from "../utils/jwt";
 
@@ -136,6 +136,11 @@ export default function Cart() {
           customerName: order?.customerName || currentUser?.fullName || "",
           customerPhone: order?.customerPhone || currentUser?.phone || "",
           customerId: order?.customer?.id || currentUser?.id || currentUserId || "",
+          items: items.map((item) => ({
+            name: item.product.name,
+            quantity: Number(item.quantity),
+            price: getProductPrice(item.product),
+          })),
         },
       });
     } catch (err) {
@@ -189,7 +194,7 @@ export default function Cart() {
                 <div key={item.product.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-white">{item.product.name}</h3>
-                    <p className="text-sm text-slate-400">BDT {Number(item.product.price).toLocaleString("en-BD")}</p>
+                    <p className="text-sm text-slate-400">BDT {getProductPrice(item.product).toLocaleString("en-BD")}</p>
                   </div>
 
                   <div className="flex items-center gap-3">

@@ -13,13 +13,15 @@ export default function Products({ products = [], title = "Featured Products", s
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {products.length > 0 ? (
           products.map((product) => (
-            <ProductCard key={product.id || product._id || product.slug || product.name} product={product} />
+            <div key={product.id || product._id || product.slug || product.name} className="min-w-[290px] snap-start sm:min-w-[360px] xl:min-w-[390px]">
+              <ProductCard product={product} />
+            </div>
           ))
         ) : (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300 md:col-span-2 xl:col-span-4">
+          <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">
             No featured products are available right now.
           </div>
         )}

@@ -12,13 +12,124 @@ const initialForm = {
   image: "",
 };
 
+function normalizeKeyFeatures(features) {
+  if (!Array.isArray(features)) return [];
+
+  return features
+    .map((feature) => {
+      const label = String(feature?.label || "").trim();
+      const value = String(feature?.value || "").trim();
+
+      if (!label && !value) return "";
+      if (!label) return value;
+      if (!value) return label;
+
+      return `${label}: ${value}`;
+    })
+    .filter(Boolean);
+}
+
+function getFeatureLabel(feature) {
+  const text = String(feature || "").trim();
+  if (!text) return "";
+  return text.includes(":") ? text.split(":")[0].trim() : text;
+}
+
+function getCategoryFeatureOptions(category) {
+  if (!Array.isArray(category?.keyFeatures)) return [];
+
+  return [...new Set(category.keyFeatures.map(getFeatureLabel).filter(Boolean))];
+}
+
+function getEmptyFeature(featureOptions = []) {
+  return { label: featureOptions[0] || "", value: "" };
+}
+
+function FeatureFields({ features, onChange, featureOptions = [] }) {
+  const safeFeatures = Array.isArray(features) && features.length > 0 ? features : [{ label: "", value: "" }];
+  const selectedLabels = new Set(safeFeatures.map((feature) => feature.label).filter(Boolean));
+  const hasAvailableFeature = featureOptions.some((option) => !selectedLabels.has(option));
+
+  const updateFeature = (index, field, value) => {
+    onChange(
+      safeFeatures.map((feature, currentIndex) =>
+        currentIndex === index ? { ...feature, [field]: value } : feature
+      )
+    );
+  };
+
+  const addFeature = () => {
+    const usedLabels = new Set(safeFeatures.map((feature) => feature.label).filter(Boolean));
+    const nextLabel = featureOptions.find((option) => !usedLabels.has(option)) || featureOptions[0] || "";
+    onChange([...safeFeatures, { label: nextLabel, value: "" }]);
+  };
+
+  const removeFeature = (index) => {
+    const nextFeatures = safeFeatures.filter((_, currentIndex) => currentIndex !== index);
+    onChange(nextFeatures.length > 0 ? nextFeatures : [{ label: "", value: "" }]);
+  };
+
+  return (
+    <div className="space-y-3">
+      {safeFeatures.map((feature, index) => (
+        <div key={index} className="grid gap-2 sm:grid-cols-[180px_1fr_auto]">
+          <select
+            value={feature.label}
+            onChange={(event) => updateFeature(index, "label", event.target.value)}
+            disabled={featureOptions.length === 0}
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+          >
+            {featureOptions.length === 0 ? (
+              <option value="">No features in category</option>
+            ) : (
+              <>
+                <option value="">Select feature</option>
+                {featureOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+          <input
+            value={feature.value}
+            onChange={(event) => updateFeature(index, "value", event.target.value)}
+            placeholder="Galaxy A07"
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+          />
+          <button
+            type="button"
+            onClick={() => removeFeature(index)}
+            className="rounded-2xl border border-rose-400/30 px-4 py-3 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/10"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      {hasAvailableFeature ? (
+        <button
+          type="button"
+          onClick={addFeature}
+          className="w-fit rounded-2xl border border-cyan-400/30 px-5 py-3 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/10"
+        >
+          Add feature
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function AddProduct() {
   const [form, setForm] = useState(initialForm);
+  const [keyFeatures, setKeyFeatures] = useState([{ label: "", value: "" }]);
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const selectedCategory = categories.find((category) => String(category.id) === String(form.categoryId));
+  const featureOptions = getCategoryFeatureOptions(selectedCategory);
 
   useEffect(() => {
     let active = true;
@@ -34,6 +145,13 @@ export default function AddProduct() {
             ...current,
             categoryId: current.categoryId || (list[0]?.id ? String(list[0].id) : ""),
           }));
+          setKeyFeatures((current) => {
+            const firstCategory = list[0] || null;
+            const currentOptions = getCategoryFeatureOptions(firstCategory);
+            const hasFeatureValue = current.some((feature) => feature.label || feature.value);
+
+            return hasFeatureValue ? current : [getEmptyFeature(currentOptions)];
+          });
         }
       } catch (err) {
         if (active) {
@@ -57,6 +175,11 @@ export default function AddProduct() {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+    if (name === "categoryId") {
+      const nextCategory = categories.find((category) => String(category.id) === String(value));
+      const nextOptions = getCategoryFeatureOptions(nextCategory);
+      setKeyFeatures([getEmptyFeature(nextOptions)]);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -78,6 +201,7 @@ export default function AddProduct() {
         stock: Number(form.stock),
         categoryId: Number(form.categoryId),
         image: form.image.trim(),
+        keyFeatures: normalizeKeyFeatures(keyFeatures),
       });
 
       setSuccess("Product created successfully. Status is pending approval.");
@@ -85,6 +209,7 @@ export default function AddProduct() {
         ...initialForm,
         categoryId: current.categoryId,
       }));
+      setKeyFeatures([getEmptyFeature(featureOptions)]);
     } catch (err) {
       setError(normalizeApiError(err));
     } finally {
@@ -168,6 +293,20 @@ export default function AddProduct() {
             placeholder="Product image URL"
             className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
           />
+
+          <div>
+            <p className="mb-3 text-sm font-medium text-slate-300">Key features</p>
+            <FeatureFields
+              features={keyFeatures}
+              onChange={setKeyFeatures}
+              featureOptions={featureOptions}
+            />
+            {featureOptions.length === 0 ? (
+              <p className="mt-2 text-sm text-amber-300">
+                Add key feature names to this category first, then sellers can select them here.
+              </p>
+            ) : null}
+          </div>
 
           {form.image.trim() ? (
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60 p-2">

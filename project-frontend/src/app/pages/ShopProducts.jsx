@@ -1,4 +1,3 @@
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../hooks/useProducts";
@@ -8,8 +7,6 @@ export default function ShopProducts() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      <Navbar />
-
       <main className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="mb-10">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Catalog</p>

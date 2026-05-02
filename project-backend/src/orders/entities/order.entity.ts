@@ -29,6 +29,12 @@ export class Order {
   @Column()
   status: string;
 
+  @Column({ default: false })
+  cancelRequested: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  cancelRequestedAt: Date | null;
+
   @Column({ type: 'varchar', nullable: true })
   customerName: string | null;
 

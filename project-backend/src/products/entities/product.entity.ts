@@ -22,6 +22,12 @@ export class Product {
   @Column('decimal')
   price: number;
 
+  @Column({ default: false })
+  isOffer: boolean;
+
+  @Column('decimal', { nullable: true })
+  offerPrice: number | null;
+
   @Column()
   stock: number;
 
@@ -39,6 +45,9 @@ export class Product {
   // 🔍 NEW (search optimization)
   @Column({ nullable: true })
   tags: string;
+
+  @Column({ type: 'simple-json', nullable: true })
+  keyFeatures: string[] | null;
 
   @CreateDateColumn()
   createdAt: Date;

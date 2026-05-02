@@ -4,5 +4,6 @@ export {
   getProductById,
   getProducts,
   getSellerPosProducts,
+  updateProduct,
   uploadProducts,
 } from "../services/productsService";

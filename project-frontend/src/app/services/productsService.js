@@ -23,6 +23,10 @@ export const productsService = {
     return apiClient.post("/products", payload);
   },
 
+  update(id, payload) {
+    return apiClient.patch(`/products/${id}`, payload);
+  },
+
   upload(file, onUploadProgress) {
     const formData = new FormData();
     formData.append("file", file);
@@ -41,5 +45,6 @@ export const getProducts = productsService.getAll;
 export const getProductById = productsService.getById;
 export const getSellerPosProducts = productsService.getSellerPosProducts;
 export const createProduct = productsService.create;
+export const updateProduct = productsService.update;
 export const uploadProducts = productsService.upload;
 export const approveProduct = productsService.approve;

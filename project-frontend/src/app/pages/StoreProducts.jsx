@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { addToCart } from "../utils/cart";
@@ -28,7 +28,7 @@ function matchesCategory(product, categoryName, categoryId) {
   );
 }
 
-export default function StoreProducts() {
+export default function StoreProducts({ bestDealsOnly = false }) {
   const [searchParams] = useSearchParams();
   const selectedCategory = searchParams.get("category") || "";
   const selectedCategoryId = searchParams.get("categoryId") || "";
@@ -36,6 +36,7 @@ export default function StoreProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const successTimerRef = useRef(null);
 
   useEffect(() => {
@@ -49,14 +50,19 @@ export default function StoreProducts() {
           limit: 100,
           category: selectedCategory,
           categoryId: selectedCategoryId,
+          approvedOnly: bestDealsOnly ? true : undefined,
+          offerOnly: bestDealsOnly ? true : undefined,
         });
 
         if (active) {
           const allProducts = unwrapProducts(response.data);
-          setProducts(
-            allProducts.filter((product) =>
+          const categoryProducts = allProducts.filter((product) =>
               matchesCategory(product, selectedCategory, selectedCategoryId)
-            )
+            );
+          setProducts(
+            bestDealsOnly
+              ? categoryProducts.filter((product) => product?.isOffer && Number(product?.offerPrice) > 0)
+              : categoryProducts
           );
         }
       } catch (err) {
@@ -76,7 +82,7 @@ export default function StoreProducts() {
     return () => {
       active = false;
     };
-  }, [selectedCategory, selectedCategoryId]);
+  }, [bestDealsOnly, selectedCategory, selectedCategoryId]);
 
   useEffect(() => () => {
     if (successTimerRef.current) {
@@ -95,30 +101,59 @@ export default function StoreProducts() {
     successTimerRef.current = window.setTimeout(() => setSuccess(""), 2500);
   };
 
+  const filteredProducts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return products;
+
+    return products.filter((product) =>
+      [
+        product.id,
+        product._id,
+        product.name,
+        product?.category?.name,
+        product.categoryName,
+      ].some((value) => String(value || "").toLowerCase().includes(query))
+    );
+  }, [products, searchTerm]);
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Catalog</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              {bestDealsOnly ? "Seller offers" : "Catalog"}
+            </p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">
-              {selectedCategory ? selectedCategory : "Products"}
+              {bestDealsOnly ? "Best Deals" : selectedCategory ? selectedCategory : "Products"}
             </h1>
           </div>
-          {selectedCategory ? (
+          {selectedCategory || bestDealsOnly ? (
             <Link
               to="/products"
               className="w-fit rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:border-cyan-400/40 hover:bg-white/5"
             >
-              All Products
+              {bestDealsOnly ? "All Products" : "All Products"}
             </Link>
           ) : null}
         </div>
         <p className="mt-4 max-w-2xl text-slate-400">
-          {selectedCategory
+          {bestDealsOnly
+            ? "Browse approved offer products selected from seller dashboards."
+            : selectedCategory
             ? `Browse ${selectedCategory} products and add your favorites to the cart.`
             : "Browse the live TechKhor catalog and add items to your cart before placing an order."}
         </p>
+        <label className="mt-6 block max-w-2xl">
+          <span className="sr-only">Search products</span>
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by product ID, name, or category..."
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+          />
+        </label>
       </div>
 
       {error ? (
@@ -139,16 +174,20 @@ export default function StoreProducts() {
         </div>
       ) : null}
 
-      {!loading && products.length === 0 ? (
+      {!loading && filteredProducts.length === 0 ? (
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">
-          {selectedCategory
+          {searchTerm.trim()
+            ? "No products match your search."
+            : bestDealsOnly
+            ? "No seller offer products are available right now."
+            : selectedCategory
             ? `No products are available in ${selectedCategory} right now.`
             : "No products are available right now."}
         </div>
       ) : null}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
         ))}
       </div>

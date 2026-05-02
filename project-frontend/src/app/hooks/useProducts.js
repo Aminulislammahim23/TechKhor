@@ -81,7 +81,9 @@ function formatPrice(value) {
 function mapAdminProductRow(product) {
   return {
     id: product.id || product._id,
+    productId: product.id || product._id,
     name: product.name || "-",
+    category: product?.category?.name || product?.categoryName || "Uncategorized",
     price: formatPrice(product.price),
     seller: product?.seller?.fullName || product?.seller?.name || "N/A",
     status: product?.isApproved || product?.status === "Approved" ? "Approved" : "Pending",
@@ -113,7 +115,9 @@ export function useSellerProducts(sellerId) {
         .filter((product) => Number(product?.seller?.id) === Number(sellerId))
         .map((product) => ({
           id: product.id || product._id,
+          productId: product.id || product._id,
           name: product.name || "-",
+          category: product?.category?.name || product?.categoryName || "Uncategorized",
           price: formatPrice(product.price),
           status: product.isApproved ? "Approved" : "Pending",
         })),

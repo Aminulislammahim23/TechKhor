@@ -29,7 +29,7 @@ export class ProductsService {
   ) {}
 
   async findAll(query: any) {
-    const { page = 1, limit = 10, search = '', categoryId, categoryName, approvedOnly } = query;
+    const { page = 1, limit = 10, search = '', categoryId, categoryName, approvedOnly, offerOnly } = query;
     const normalizedSearch = String(search || '').trim();
     const take = Math.min(Math.max(Number(limit) || 10, 1), 100);
     const skip = (Number(page) - 1) * take;
@@ -40,10 +40,10 @@ export class ProductsService {
       .leftJoinAndSelect('product.category', 'category');
 
     if (normalizedSearch) {
-      builder.andWhere(
-        '(product.name ILIKE :search OR product.description ILIKE :search OR product.tags ILIKE :search)',
-        { search: `%${normalizedSearch}%` },
-      );
+      const searchWhere =
+        '(CAST(product.id AS TEXT) ILIKE :search OR product.name ILIKE :search OR product.description ILIKE :search OR product.tags ILIKE :search OR category.name ILIKE :search)';
+
+      builder.andWhere(searchWhere, { search: `%${normalizedSearch}%` });
     }
 
     if (categoryId) {
@@ -58,6 +58,13 @@ export class ProductsService {
 
     if (String(approvedOnly) === 'true') {
       builder.andWhere('product.isApproved = true');
+    }
+
+    if (String(offerOnly) === 'true') {
+      builder
+        .andWhere('product.isOffer = true')
+        .andWhere('product.offerPrice IS NOT NULL')
+        .andWhere('product.offerPrice > 0');
     }
 
     const [data, total] = await builder
@@ -87,7 +94,7 @@ export class ProductsService {
 
     if (search) {
       builder.andWhere(
-        '(product.name ILIKE :search OR product.description ILIKE :search OR product.tags ILIKE :search)',
+        '(CAST(product.id AS TEXT) ILIKE :search OR product.name ILIKE :search OR product.description ILIKE :search OR product.tags ILIKE :search OR category.name ILIKE :search)',
         { search: searchPattern },
       );
     }
@@ -124,8 +131,11 @@ export class ProductsService {
       name: dto.name,
       description: dto.description,
       price: dto.price,
+      isOffer: Boolean(dto.isOffer) && Number(dto.offerPrice) > 0,
+      offerPrice: dto.offerPrice !== undefined ? Number(dto.offerPrice) : null,
       stock: dto.stock,
       image: dto.image || null,
+      keyFeatures: this.normalizeKeyFeatures(dto.keyFeatures),
       seller: user,
       category,
       isApproved: false,
@@ -186,6 +196,7 @@ export class ProductsService {
           stock: Number(normalizedRow.stock),
           image: this.optionalString(normalizedRow.image) || null,
           tags: this.optionalString(normalizedRow.tags),
+          keyFeatures: this.parseUploadKeyFeatures(normalizedRow.keyfeatures),
           seller: { id: user.id },
           category,
           isApproved: false,
@@ -230,8 +241,15 @@ export class ProductsService {
     if (dto.name !== undefined) product.name = dto.name;
     if (dto.description !== undefined) product.description = dto.description;
     if (dto.price !== undefined) product.price = dto.price;
+    if (dto.isOffer !== undefined) product.isOffer = dto.isOffer;
+    if (dto.offerPrice !== undefined) product.offerPrice = dto.offerPrice === null ? null : Number(dto.offerPrice);
     if (dto.stock !== undefined) product.stock = dto.stock;
     if (dto.image !== undefined) product.image = dto.image || null;
+    if (dto.keyFeatures !== undefined) product.keyFeatures = this.normalizeKeyFeatures(dto.keyFeatures);
+
+    if (!product.isOffer) {
+      product.offerPrice = null;
+    }
 
     return this.repo.save(product);
   }
@@ -370,5 +388,22 @@ export class ProductsService {
 
   private optionalString(value: unknown) {
     return String(value ?? '').trim();
+  }
+
+  private normalizeKeyFeatures(value: unknown) {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+  }
+
+  private parseUploadKeyFeatures(value: unknown) {
+    return String(value ?? '')
+      .split(/[\n;|]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 }

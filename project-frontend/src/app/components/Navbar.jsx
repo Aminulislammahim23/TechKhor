@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 import { setAuthToken, useAuth } from "../hooks/useAuth";
 import { getCurrentRoleFromToken } from "../utils/jwt";
 
@@ -82,6 +83,7 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
+              {!isAdmin && !isSeller ? <NotificationBell /> : null}
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
                 {role || "customer"}
               </span>
@@ -173,6 +175,7 @@ export default function Navbar() {
             <div className="flex gap-3 pt-2">
               {isAuthenticated ? (
                 <>
+                  {!isAdmin && !isSeller ? <NotificationBell /> : null}
                   <span className="flex-1 rounded-full border border-white/10 px-4 py-3 text-center text-sm font-medium text-slate-300">
                     {role || "customer"}
                   </span>

@@ -1,7 +1,31 @@
 import { formatOrderDate, useOrders } from "../hooks/useOrders";
+import { normalizeApiError, requestOrderCancel } from "../services";
+import { useState } from "react";
 
 export default function MyOrders() {
-  const { orders, loading, error } = useOrders();
+  const { orders, setOrders, loading, error, setError } = useOrders();
+  const [requestingId, setRequestingId] = useState("");
+
+  const handleCancelRequest = async (order) => {
+    try {
+      setRequestingId(order.id);
+      setError("");
+      const response = await requestOrderCancel(order.id);
+      setOrders((current) =>
+        current.map((item) => (item.id === order.id ? { ...item, ...response.data } : item))
+      );
+    } catch (err) {
+      setError(normalizeApiError(err));
+    } finally {
+      setRequestingId("");
+    }
+  };
+
+  const getStatusClass = (status) => {
+    if (status === "paid") return "bg-emerald-500/15 text-emerald-300";
+    if (status === "canceled") return "bg-rose-500/15 text-rose-300";
+    return "bg-amber-500/15 text-amber-300";
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -43,9 +67,24 @@ export default function MyOrders() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${order.status === "paid" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${getStatusClass(order.status)}`}>
                   {order.status}
                 </span>
+                {order.status === "pending" && !order.cancelRequested ? (
+                  <button
+                    type="button"
+                    onClick={() => handleCancelRequest(order)}
+                    disabled={requestingId === order.id}
+                    className="rounded-full border border-rose-400/30 px-4 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {requestingId === order.id ? "Sending..." : "Cancel request"}
+                  </button>
+                ) : null}
+                {order.status === "pending" && order.cancelRequested ? (
+                  <span className="rounded-full border border-cyan-400/20 px-4 py-2 text-xs font-semibold text-cyan-200">
+                    Cancel request sent
+                  </span>
+                ) : null}
               </div>
             </div>
 

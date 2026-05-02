@@ -16,9 +16,24 @@ export const ordersService = {
   getAdmin() {
     return apiClient.get("/orders/admin");
   },
+
+  requestCancel(id) {
+    return apiClient.post(`/orders/${id}/cancel-request`);
+  },
+
+  getSellerCancelRequests() {
+    return apiClient.get("/orders/seller/cancel-requests");
+  },
+
+  acceptCancel(id) {
+    return apiClient.post(`/orders/${id}/accept-cancel`);
+  },
 };
 
 export const createOrder = ordersService.create;
 export const createOrderFromCart = ordersService.createFromCart;
 export const getMyOrders = ordersService.getMine;
 export const getAdminOrders = ordersService.getAdmin;
+export const requestOrderCancel = ordersService.requestCancel;
+export const getSellerCancelRequests = ordersService.getSellerCancelRequests;
+export const acceptOrderCancel = ordersService.acceptCancel;

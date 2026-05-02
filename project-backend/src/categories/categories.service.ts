@@ -20,13 +20,22 @@ export class CategoriesService {
   ) {}
 
   async create(dto) {
+    const name = String(dto?.name || '').trim();
+
+    if (!name) {
+      throw new BadRequestException('Category name is required');
+    }
+
     const exists = await this.repo.findOne({
-      where: { name: dto.name },
+      where: { name },
     });
 
     if (exists) throw new ConflictException('Category exists');
 
-    const category = this.repo.create(dto);
+    const category = this.repo.create({
+      name,
+      keyFeatures: this.normalizeKeyFeatures(dto?.keyFeatures),
+    });
     return this.repo.save(category);
   }
 
@@ -59,6 +68,9 @@ export class CategoriesService {
     }
 
     category.name = name;
+    if (dto?.keyFeatures !== undefined) {
+      category.keyFeatures = this.normalizeKeyFeatures(dto.keyFeatures);
+    }
 
     return this.repo.save(category);
   }
@@ -86,5 +98,15 @@ export class CategoriesService {
       message: 'Category deleted successfully',
       id,
     };
+  }
+
+  private normalizeKeyFeatures(value: unknown) {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
   }
 }

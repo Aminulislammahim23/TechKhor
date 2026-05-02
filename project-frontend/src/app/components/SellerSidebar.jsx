@@ -8,6 +8,7 @@ const navItems = [
   { label: "Dashboard", to: "/seller" },
   { label: "My Products", to: "/seller/products" },
   { label: "Add Product", to: "/seller/add-product" },
+  { label: "Offer Product", to: "/seller/offer-product" },
   { label: "POS Billing", to: "/seller/pos" },
   { label: "Earnings", to: "/seller/earnings" },
 ];

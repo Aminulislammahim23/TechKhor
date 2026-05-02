@@ -75,12 +75,25 @@ export function clearCart() {
   writeCart([]);
 }
 
+function getProductPrice(product) {
+  const regularPrice = Number(product?.price);
+  const offerPrice = Number(product?.offerPrice);
+
+  if (product?.isOffer && Number.isFinite(offerPrice) && offerPrice > 0) {
+    return offerPrice;
+  }
+
+  return Number.isFinite(regularPrice) ? regularPrice : 0;
+}
+
 export function getCartTotals(items = readCart()) {
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0);
 
   return {
     itemCount,
     totalAmount,
   };
 }
+
+export { getProductPrice };
