@@ -23,7 +23,10 @@ export class PaymentsService {
 
   async create(user: { id: number; role?: string }, dto: CreatePaymentDto) {
     const userId = Number(user.id);
-    // 1. Prevent duplicate payment for same order
+    // 1. Validate order ownership before exposing payment state.
+    const order = await this.ordersService.findOneForUser(dto.orderId, user);
+
+    // 2. Prevent duplicate payment for same order
     const existing = await this.paymentRepo.findOne({
       where: { order: { id: dto.orderId } },
     });
@@ -33,16 +36,12 @@ export class PaymentsService {
     }
 
     if (existing && existing.status === 'pending') {
-      const pendingOrder = await this.ordersService.findOne(dto.orderId);
       await this.notificationsService.createPaymentApprovalNotifications(
-        pendingOrder,
+        order,
         existing.id,
       );
       return existing;
     }
-
-    // 2. Validate order exists using OrdersService
-    const order = await this.ordersService.findOne(dto.orderId);
 
     // 3. Create payment record
     const payment = this.paymentRepo.create({
@@ -70,9 +69,8 @@ export class PaymentsService {
     if (savedPayment.status === 'success') {
       await this.finalizeSuccessfulPayment(savedPayment);
     } else {
-      const pendingOrder = await this.ordersService.findOne(dto.orderId);
       await this.notificationsService.createPaymentApprovalNotifications(
-        pendingOrder,
+        order,
         savedPayment.id,
       );
     }
@@ -125,8 +123,13 @@ export class PaymentsService {
 
   async findAll(userId: number) {
     return this.paymentRepo.find({
-      where: { user: { id: userId } },
-      relations: ['order'],
+      where: [
+        { user: { id: userId } },
+        { order: { user: { id: userId } } },
+        { order: { customer: { id: userId } } },
+      ],
+      relations: ['order', 'order.user', 'order.customer'],
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -194,10 +197,30 @@ export class PaymentsService {
   async findOne(id: number) {
     const payment = await this.paymentRepo.findOne({
       where: { id },
-      relations: ['order'],
+      relations: ['user', 'order', 'order.user', 'order.customer'],
     });
 
     if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return payment;
+  }
+
+  async findOneForUser(id: number, user: { id: number; role?: string }) {
+    const payment = await this.findOne(id);
+
+    if (user.role === 'admin') {
+      return payment;
+    }
+
+    const userId = Number(user.id);
+    const ownsPayment =
+      Number(payment.user?.id) === userId ||
+      Number(payment.order?.user?.id) === userId ||
+      Number(payment.order?.customer?.id) === userId;
+
+    if (!ownsPayment) {
       throw new NotFoundException('Payment not found');
     }
 

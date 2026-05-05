@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import Card from "../components/Card";
 import Table, { StatusPill } from "../components/Table";
 import { getMyOrders } from "../api";
-import { fallbackOrders } from "../data/customerDashboardData";
 
 function formatCurrency(value) {
   const numeric = Number(value);
@@ -53,11 +52,11 @@ export default function CustomerDashboard() {
         const response = await getMyOrders();
         const apiOrders = Array.isArray(response.data) ? response.data.map(normalizeOrder) : [];
         if (active) {
-          setOrders(apiOrders.length > 0 ? apiOrders : fallbackOrders);
+          setOrders(apiOrders);
         }
       } catch {
         if (active) {
-          setOrders(fallbackOrders);
+          setOrders([]);
         }
       } finally {
         if (active) {
@@ -89,7 +88,7 @@ export default function CustomerDashboard() {
       },
       {
         title: "Total Spent",
-        value: totalValue > 0 ? formatCurrency(totalValue) : "BDT 135,600",
+        value: formatCurrency(totalValue),
         change: "Lifetime purchase value",
         accent: "from-emerald-400 to-teal-500",
         icon: "T",
@@ -128,7 +127,7 @@ export default function CustomerDashboard() {
           : summary.map((item) => <Card key={item.title} {...item} tone="light" />)}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+      <section>
         <div>
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
@@ -155,24 +154,6 @@ export default function CustomerDashboard() {
             )}
           />
         </div>
-
-        <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600">Customer Status</p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-950">Premium buyer</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Fast checkout, saved payment tracking, and priority support are ready whenever your next build starts.
-          </p>
-          <div className="mt-6 grid gap-3">
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Support response</p>
-              <p className="mt-1 font-semibold text-slate-950">Under 2 hours</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Saved address</p>
-              <p className="mt-1 font-semibold text-slate-950">Dhaka, Bangladesh</p>
-            </div>
-          </div>
-        </aside>
       </section>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Table, { StatusPill } from "../components/Table";
 import { getMyOrders } from "../api";
-import { fallbackOrders } from "../data/customerDashboardData";
 
 function formatCurrency(value) {
   const numeric = Number(value);
@@ -60,11 +59,11 @@ export default function CustomerOrders() {
         const response = await getMyOrders();
         const apiOrders = Array.isArray(response.data) ? response.data.map(normalizeOrder) : [];
         if (active) {
-          setOrders(apiOrders.length > 0 ? apiOrders : fallbackOrders);
+          setOrders(apiOrders);
         }
       } catch {
         if (active) {
-          setOrders(fallbackOrders);
+          setOrders([]);
         }
       } finally {
         if (active) {

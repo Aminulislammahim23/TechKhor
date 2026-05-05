@@ -33,4 +33,38 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .category-card-scroller,
+  .product-card-scroller,
+  .trend-card-scroller {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-color: rgb(34 211 238 / 0.35) transparent;
+    scrollbar-width: thin;
+  }
+
+  .category-card-scroller::-webkit-scrollbar,
+  .product-card-scroller::-webkit-scrollbar,
+  .trend-card-scroller::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .category-card-scroller::-webkit-scrollbar-track,
+  .product-card-scroller::-webkit-scrollbar-track,
+  .trend-card-scroller::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .category-card-scroller::-webkit-scrollbar-thumb,
+  .product-card-scroller::-webkit-scrollbar-thumb,
+  .trend-card-scroller::-webkit-scrollbar-thumb {
+    background: rgb(34 211 238 / 0.35);
+    border-radius: 999px;
+    transition: background-color 220ms ease;
+  }
+
+  .category-card-scroller:hover::-webkit-scrollbar-thumb,
+  .product-card-scroller:hover::-webkit-scrollbar-thumb,
+  .trend-card-scroller:hover::-webkit-scrollbar-thumb {
+    background: rgb(34 211 238 / 0.55);
+  }
 }

@@ -47,6 +47,8 @@ export default function NotificationBell({
   orderLink = "/orders",
   actionLabel = "View order",
   includePaymentApprovals = false,
+  variant = "dark",
+  label = "",
 }) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -158,10 +160,17 @@ export default function NotificationBell({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:border-cyan-400/30 hover:bg-white/10 hover:text-white"
+        className={`relative inline-flex items-center justify-center border text-sm transition ${
+          label ? "h-12 rounded-2xl px-4" : "h-10 w-10 rounded-full"
+        } ${
+          variant === "light"
+            ? "border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-slate-950"
+            : "border-white/10 bg-white/5 text-slate-200 hover:border-cyan-400/30 hover:bg-white/10 hover:text-white"
+        }`}
         aria-label="Notifications"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+        {label ? <span className="font-medium">{label}</span> : null}
+        <svg viewBox="0 0 24 24" className={label ? "ml-2 h-5 w-5" : "h-5 w-5"} fill="none" aria-hidden="true">
           <path
             d="M18 9.5a6 6 0 1 0-12 0c0 7-3 7-3 8.5h18c0-1.5-3-1.5-3-8.5ZM10 21h4"
             stroke="currentColor"

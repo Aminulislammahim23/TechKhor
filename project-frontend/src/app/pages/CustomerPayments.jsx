@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Table, { StatusPill } from "../components/Table";
 import { getPayments } from "../api";
-import { fallbackPayments } from "../data/customerDashboardData";
 
 function formatCurrency(value) {
   const numeric = Number(value);
@@ -40,11 +39,11 @@ export default function CustomerPayments() {
         const response = await getPayments();
         const apiPayments = Array.isArray(response.data) ? response.data.map(normalizePayment) : [];
         if (active) {
-          setPayments(apiPayments.length > 0 ? apiPayments : fallbackPayments);
+          setPayments(apiPayments);
         }
       } catch {
         if (active) {
-          setPayments(fallbackPayments);
+          setPayments([]);
         }
       } finally {
         if (active) {
