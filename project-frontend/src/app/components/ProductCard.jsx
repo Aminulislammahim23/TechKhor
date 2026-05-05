@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TechVisual from "./TechVisual";
 
@@ -6,6 +7,29 @@ function formatPrice(value) {
   return new Intl.NumberFormat("en-BD", {
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function ProductImage({ product }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [product?.image]);
+
+  if (!product?.image || imageFailed) {
+    return <TechVisual variant={product?.variant || "hero"} className="h-56" />;
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-slate-900">
+      <img
+        src={product.image}
+        alt={product.name || "Product image"}
+        onError={() => setImageFailed(true)}
+        className="h-56 w-full object-cover transition duration-500 ease-out group-hover:scale-105"
+      />
+    </div>
+  );
 }
 
 export default function ProductCard({ product, onAddToCart }) {
@@ -18,19 +42,9 @@ export default function ProductCard({ product, onAddToCart }) {
   const hasOffer = Boolean(product?.isOffer) && Number.isFinite(offerPrice) && offerPrice > 0 && offerPrice < regularPrice;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-slate-950/30 backdrop-blur transition duration-300 hover:-translate-y-2 hover:border-cyan-400/40 hover:bg-white/[0.07]">
+    <article className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-slate-950/30 backdrop-blur transition-all duration-500 ease-out hover:-translate-y-2 hover:border-cyan-400/40 hover:bg-white/[0.07]">
       <div className="p-4">
-        {product?.image ? (
-          <div className="overflow-hidden rounded-2xl bg-slate-900">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-          </div>
-        ) : (
-          <TechVisual variant={product?.variant || "hero"} className="h-56" />
-        )}
+        <ProductImage product={product} />
       </div>
 
       <div className="space-y-4 px-5 pb-5">
@@ -46,7 +60,7 @@ export default function ProductCard({ product, onAddToCart }) {
         ) : null}
 
         <div>
-          <h3 className="text-lg font-semibold text-white">{product?.name}</h3>
+          <h3 className="line-clamp-2 break-words text-lg font-semibold text-white">{product?.name}</h3>
           <p className="mt-1 line-clamp-3 text-sm text-slate-400">
             {product?.description || "Premium gadget built for modern routines."}
           </p>
@@ -77,14 +91,14 @@ export default function ProductCard({ product, onAddToCart }) {
                 type="button"
                 onClick={() => onAddToCart(product)}
                 disabled={!inStock}
-                className="inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition duration-300 hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-300"
+                className="inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition-all duration-300 ease-out hover:bg-cyan-300 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-300"
               >
                 Add to Cart
               </button>
             ) : null}
             <Link
               to={href}
-              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition duration-300 hover:bg-cyan-300 hover:shadow-lg hover:shadow-cyan-400/20"
+              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition-all duration-300 ease-out hover:bg-cyan-300 hover:shadow-lg hover:shadow-cyan-400/20 active:scale-95"
             >
               View
             </Link>

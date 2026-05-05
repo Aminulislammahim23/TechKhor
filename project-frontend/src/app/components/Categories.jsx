@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCategories } from "../api/categories.api";
 
@@ -198,6 +198,9 @@ function CategoryIcon({ icon }) {
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
+  const scrollerRef = useRef(null);
+  const isAutoScrollPausedRef = useRef(false);
+  const resumeAutoScrollTimeoutRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -224,32 +227,142 @@ export default function Categories() {
     };
   }, []);
 
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || categories.length === 0) return undefined;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+    let animationFrameId;
+    let previousTime;
+
+    function scrollSlowly(timestamp) {
+      if (!previousTime) previousTime = timestamp;
+
+      const elapsed = timestamp - previousTime;
+      previousTime = timestamp;
+
+      if (!isAutoScrollPausedRef.current) {
+        const loopWidth = scroller.scrollWidth / 2;
+        scroller.scrollLeft += elapsed * 0.04;
+
+        if (scroller.scrollLeft >= loopWidth) {
+          scroller.scrollLeft -= loopWidth;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(scrollSlowly);
+    }
+
+    animationFrameId = requestAnimationFrame(scrollSlowly);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [categories]);
+
+  useEffect(() => () => {
+    if (resumeAutoScrollTimeoutRef.current) {
+      window.clearTimeout(resumeAutoScrollTimeoutRef.current);
+    }
+  }, []);
+
+  const pauseAutoScroll = () => {
+    isAutoScrollPausedRef.current = true;
+
+    if (resumeAutoScrollTimeoutRef.current) {
+      window.clearTimeout(resumeAutoScrollTimeoutRef.current);
+    }
+  };
+
+  const resumeAutoScroll = (delay = 0) => {
+    if (resumeAutoScrollTimeoutRef.current) {
+      window.clearTimeout(resumeAutoScrollTimeoutRef.current);
+    }
+
+    resumeAutoScrollTimeoutRef.current = window.setTimeout(() => {
+      isAutoScrollPausedRef.current = false;
+    }, delay);
+  };
+
+  const scroll = (direction) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    pauseAutoScroll();
+    scroller.scrollBy({
+      left: direction * Math.min(scroller.clientWidth * 0.85, 980),
+      behavior: "smooth",
+    });
+    resumeAutoScroll(1800);
+  };
+
+  const renderCategoryCard = (category, keySuffix = "") => (
+    <Link
+      key={`${category.id}${keySuffix}`}
+      to={`/products?category=${encodeURIComponent(category.name)}&categoryId=${encodeURIComponent(category.id)}`}
+      tabIndex={keySuffix ? -1 : undefined}
+      className="group w-[calc(100vw-2rem)] min-w-[calc(100vw-2rem)] snap-start rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30 transition-all duration-500 ease-out hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.07] sm:w-auto sm:min-w-[360px] xl:min-w-[390px]"
+    >
+      <div className={`inline-flex rounded-2xl bg-gradient-to-br ${category.tone} p-4 text-white shadow-lg`}>
+        <CategoryIcon icon={category.icon} />
+      </div>
+      <h3 className="mt-6 text-xl font-semibold text-white">{category.name}</h3>
+      <p className="mt-3 leading-7 text-slate-400">{category.description}</p>
+      <div className="mt-6 h-px w-full bg-white/10" />
+      <p className="mt-4 text-sm font-medium text-cyan-300 transition group-hover:text-cyan-200">
+        Shop collection
+      </p>
+    </Link>
+  );
+
   return (
     <section id="categories" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Browse by type</p>
-        <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Categories</h2>
+      <div className="mb-10 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">Browse by type</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Categories</h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => scroll(-1)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-slate-300 transition-all duration-300 ease-out hover:border-white hover:text-white active:scale-95"
+            aria-label="Previous categories"
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll(1)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-950 transition-all duration-300 ease-out hover:bg-cyan-300 active:scale-95"
+            aria-label="Next categories"
+          >
+            <span aria-hidden="true">&gt;</span>
+          </button>
+        </div>
       </div>
 
-      <div className="-mx-4 flex snap-x gap-6 overflow-x-auto px-4 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={scrollerRef}
+        className="category-card-scroller -mx-4 -mt-4 overflow-x-auto scroll-smooth px-4 pb-6 pt-4"
+        onMouseEnter={pauseAutoScroll}
+        onMouseLeave={() => resumeAutoScroll(500)}
+        onPointerDown={pauseAutoScroll}
+        onPointerUp={() => resumeAutoScroll(1200)}
+        onPointerCancel={() => resumeAutoScroll(1200)}
+        onWheel={() => {
+          pauseAutoScroll();
+          resumeAutoScroll(1600);
+        }}
+      >
         {categories.length > 0 ? (
-          categories.map((category) => (
-            <Link
-              key={category.id}
-              to={`/products?category=${encodeURIComponent(category.name)}&categoryId=${encodeURIComponent(category.id)}`}
-              className="group min-w-[290px] snap-start rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.07] sm:min-w-[360px] xl:min-w-[390px]"
-            >
-              <div className={`inline-flex rounded-2xl bg-gradient-to-br ${category.tone} p-4 text-white shadow-lg`}>
-                <CategoryIcon icon={category.icon} />
-              </div>
-              <h3 className="mt-6 text-xl font-semibold text-white">{category.name}</h3>
-              <p className="mt-3 leading-7 text-slate-400">{category.description}</p>
-              <div className="mt-6 h-px w-full bg-white/10" />
-              <p className="mt-4 text-sm font-medium text-cyan-300 transition group-hover:text-cyan-200">
-                Shop collection
-              </p>
-            </Link>
-          ))
+          <div className="flex w-max snap-x">
+            <div className="flex gap-6 pr-6">{categories.map((category) => renderCategoryCard(category))}</div>
+            <div className="flex gap-6 pr-6" aria-hidden="true">
+              {categories.map((category) => renderCategoryCard(category, "-duplicate"))}
+            </div>
+          </div>
         ) : (
           <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 text-slate-300">
             No categories are available right now.
