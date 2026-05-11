@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Hero from "../components/Hero";
 import Products from "../components/Products";
 import Categories from "../components/Categories";
@@ -14,9 +15,14 @@ function selectFeaturedProducts(responseData) {
 }
 
 export default function Home() {
+  const heroParams = useMemo(() => ({ approvedOnly: true, limit: 100 }), []);
+  const newTrendParams = useMemo(() => ({ approvedOnly: true, limit: 12 }), []);
+  const bestDealParams = useMemo(() => ({ offerOnly: true, approvedOnly: true, limit: 4 }), []);
+
+  const { products: heroProducts, loading: heroLoading } = useProducts({ params: heroParams });
   const { products: featuredProducts } = useProducts({ select: selectFeaturedProducts });
   const { products: newTrends } = useProducts({
-    params: { approvedOnly: true, limit: 12 },
+    params: newTrendParams,
     select: (responseData) =>
       unwrapProducts(responseData)
         .slice()
@@ -24,14 +30,14 @@ export default function Home() {
         .slice(0, 10),
   });
   const { products: bestDeals } = useProducts({
-    params: { offerOnly: true, approvedOnly: true, limit: 4 },
+    params: bestDealParams,
     select: selectFeaturedProducts,
   });
 
   return (
     <div className="min-h-screen bg-slate-950">
       <main>
-        <Hero />
+        <Hero products={heroProducts} loading={heroLoading} />
         <Products
           products={bestDeals}
           title="Best Deals"
