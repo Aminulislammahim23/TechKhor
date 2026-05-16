@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="footer footer-horizontal footer-center bg-base-200 text-base-content border-base-300 border-t px-10 py-8">
       <nav className="grid grid-flow-col gap-4">
-        <a className="link link-hover">About us</a>
+        <Link to="/about" className="link link-hover">About us</Link>
         <a className="link link-hover">Contact</a>
         <a className="link link-hover">Jobs</a>
         <a className="link link-hover">Press kit</a>

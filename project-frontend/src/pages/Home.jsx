@@ -17,9 +17,9 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-slate-950">
 
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-4xl font-bold">Welcome to TechKhor</h1>
         <p className="text-gray-500 mt-2">
           Your one-stop shop for all your tech needs. Explore our latest products and exclusive deals.
@@ -27,7 +27,7 @@ export default function HomePage() {
         <CaroCart />
       </div>
 
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-4xl font-bold">Shop Products</h1>
         <p className="text-gray-500 mt-2">
           Browse our latest products and add them to your cart.
@@ -76,7 +76,7 @@ export default function HomePage() {
 
 
 
-      <div className="mt-8">
+      <div className="mt-6">
         <h1 className="text-4xl font-bold"> Best Deals </h1>
         <p className="text-gray-500 mt-2">
           Check out our exclusive deals and special offers.

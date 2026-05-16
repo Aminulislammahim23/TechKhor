@@ -6,7 +6,7 @@ import AppRoutes from './routes/AppRoutes'
 function App() {
   return (
     <BrowserRouter>
-      <MainLayout role="customer">
+      <MainLayout role="viewer">
         <AppRoutes />
       </MainLayout>
     </BrowserRouter>

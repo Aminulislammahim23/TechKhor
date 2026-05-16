@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
@@ -22,13 +22,6 @@ const slides = [
 
 export default function CaroCart() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const slide = slides[activeSlide];
-
-  const showPreviousSlide = () => {
-    setActiveSlide((currentSlide) =>
-      currentSlide === 0 ? slides.length - 1 : currentSlide - 1
-    );
-  };
 
   const showNextSlide = () => {
     setActiveSlide((currentSlide) =>
@@ -36,13 +29,31 @@ export default function CaroCart() {
     );
   };
 
+  useEffect(() => {
+    const intervalId = setInterval(showNextSlide, 3000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const showPreviousSlide = () => {
+    setActiveSlide((currentSlide) =>
+      currentSlide === 0 ? slides.length - 1 : currentSlide - 1
+    );
+  };
+
   return (
-    <div className="relative w-full overflow-hidden rounded-box">
-      <img
-        src={slide.image}
-        alt={slide.alt}
-        className="h-64 w-full object-cover md:h-96"
-      />
+    <div className="relative h-64 w-full overflow-hidden rounded-box md:h-96">
+      {slides.map((slide, index) => (
+        <img
+          key={slide.image}
+          src={slide.image}
+          alt={slide.alt}
+          aria-hidden={activeSlide !== index}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out ${
+            activeSlide === index ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
 
       <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
         <button

@@ -1,4 +1,7 @@
-import { ExternalLink, Mail, MessageCircle, Phone } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import facebookIcon from "../assets/icon/facebook.svg";
+import instagramIcon from "../assets/icon/instagram.svg";
+import whatsappIcon from "../assets/icon/whatsapp.svg";
 
 export default function Contact() {
   return (
@@ -11,14 +14,34 @@ export default function Contact() {
         <MessageCircle size={24} />
       </button>
 
-      <a href="tel:+8800000000000" className="btn btn-lg btn-circle" aria-label="Call us">
-        <Phone size={22} />
+      <a
+        href="https://wa.me/8800000000000"
+        className="btn btn-lg btn-circle bg-white"
+        aria-label="WhatsApp"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <img src={whatsappIcon} alt="" className="h-7 w-7" />
       </a>
-      <a href="mailto:support@techkhor.com" className="btn btn-lg btn-circle" aria-label="Email us">
-        <Mail size={22} />
+
+      <a
+        href="https://www.instagram.com/techkhor06"
+        className="btn btn-lg btn-circle bg-white"
+        aria-label="Instagram"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <img src={instagramIcon} alt="" className="h-7 w-7" />
       </a>
-      <a href="https://facebook.com" className="btn btn-lg btn-circle" aria-label="Facebook">
-        <ExternalLink size={22} />
+
+      <a
+        href="https://www.facebook.com/techkhor06"
+        className="btn btn-lg btn-circle bg-white"
+        aria-label="Facebook"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <img src={facebookIcon} alt="" className="h-7 w-7" />
       </a>
     </div>
   );
