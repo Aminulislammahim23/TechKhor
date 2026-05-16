@@ -1,15 +1,14 @@
-// CommonNavbar.jsx
-
 import {
   Bell,
   ShoppingCart,
   Menu,
   UserCircle2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Navbar({ role = "customer" }) {
   return (
-    <div className="navbar bg-base-100 shadow-md px-4">
+    <div className="navbar z-50 bg-base-100/80 backdrop-blur-md border-b border-base-300/70 shadow-sm px-4">
 
       {/* Left */}
       <div className="navbar-start">
@@ -26,9 +25,9 @@ export default function Navbar({ role = "customer" }) {
 
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
+            className="menu menu-sm dropdown-content mt-3 z-50 w-52 rounded-box border border-base-300/70 bg-base-100/90 p-2 shadow-xl backdrop-blur-xl"
           >
-            <li><a>Home</a></li>
+            <li><Link to="/">Home</Link></li>
 
             {role === "admin" && (
               <>
@@ -47,24 +46,25 @@ export default function Navbar({ role = "customer" }) {
 
             {role === "customer" && (
               <>
-                <li><a>Shop</a></li>
+                <li><Link to="/products">Shop</Link></li>
                 <li><a>My Orders</a></li>
+                <li><Link to="/pc-builder">PC Builder</Link></li>
               </>
             )}
           </ul>
         </div>
 
         {/* Logo */}
-        <a className="text-2xl font-bold text-primary">
+        <Link to="/" className="text-2xl font-bold text-primary">
           Techkhor
-        </a>
+        </Link>
       </div>
 
       {/* Center Menu */}
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1 gap-2">
 
-          <li><a>Home</a></li>
+          <li><Link to="/">Home</Link></li>
 
           {role === "admin" && (
             <>
@@ -83,8 +83,9 @@ export default function Navbar({ role = "customer" }) {
 
           {role === "customer" && (
             <>
-              <li><a>Shop</a></li>
+              <li><Link to="/products">Shop</Link></li>
               <li><a>My Orders</a></li>
+              <li><Link to="/pc-builder">PC Builder</Link></li>
             </>
           )}
         </ul>
@@ -127,7 +128,7 @@ export default function Navbar({ role = "customer" }) {
 
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
+            className="menu menu-sm dropdown-content mt-3 z-50 w-52 rounded-box border border-base-300/70 bg-base-100/90 p-2 shadow-xl backdrop-blur-xl"
           >
             <li>
               <a>Profile</a>
